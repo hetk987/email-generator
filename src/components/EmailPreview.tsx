@@ -1,6 +1,5 @@
 "use client";
 
-import { render } from "@react-email/render";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Copy, Download } from "lucide-react";
@@ -9,12 +8,21 @@ import { useState } from "react";
 interface EmailPreviewProps {
   htmlContent: string;
   error?: string;
+  isLoading?: boolean;
 }
 
-export function EmailPreview({ htmlContent, error }: EmailPreviewProps) {
+export function EmailPreview({
+  htmlContent,
+  error,
+  isLoading = false,
+}: EmailPreviewProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
+    if (!htmlContent.trim()) {
+      return;
+    }
+
     try {
       await navigator.clipboard.writeText(htmlContent);
       setCopied(true);
@@ -25,15 +33,23 @@ export function EmailPreview({ htmlContent, error }: EmailPreviewProps) {
   };
 
   const handleDownload = () => {
-    const blob = new Blob([htmlContent], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "email-template.html";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    if (!htmlContent.trim()) {
+      return;
+    }
+
+    try {
+      const blob = new Blob([htmlContent], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "email-template.html";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to download:", err);
+    }
   };
 
   return (
@@ -47,6 +63,7 @@ export function EmailPreview({ htmlContent, error }: EmailPreviewProps) {
                 variant="outline"
                 size="sm"
                 onClick={handleCopy}
+                disabled={!htmlContent.trim() || isLoading}
                 className="flex items-center gap-2"
               >
                 <Copy className="h-4 w-4" />
@@ -56,6 +73,7 @@ export function EmailPreview({ htmlContent, error }: EmailPreviewProps) {
                 variant="outline"
                 size="sm"
                 onClick={handleDownload}
+                disabled={!htmlContent.trim() || isLoading}
                 className="flex items-center gap-2"
               >
                 <Download className="h-4 w-4" />
@@ -65,7 +83,16 @@ export function EmailPreview({ htmlContent, error }: EmailPreviewProps) {
           </div>
         </CardHeader>
         <CardContent className="flex-1 p-0">
-          {error ? (
+          {isLoading ? (
+            <div className="h-full flex items-center justify-center p-6">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <div className="text-sm text-muted-foreground">
+                  Generating preview...
+                </div>
+              </div>
+            </div>
+          ) : error ? (
             <div className="h-full flex items-center justify-center p-6">
               <div className="text-center">
                 <div className="text-red-500 text-sm font-medium mb-2">
@@ -76,7 +103,7 @@ export function EmailPreview({ htmlContent, error }: EmailPreviewProps) {
                 </div>
               </div>
             </div>
-          ) : (
+          ) : htmlContent ? (
             <div className="h-full">
               <iframe
                 srcDoc={htmlContent}
@@ -84,6 +111,12 @@ export function EmailPreview({ htmlContent, error }: EmailPreviewProps) {
                 className="w-full h-full border-0 rounded-b-lg"
                 sandbox="allow-same-origin"
               />
+            </div>
+          ) : (
+            <div className="h-full flex items-center justify-center p-6">
+              <div className="text-center text-muted-foreground">
+                Click "Generate Preview" to see your email
+              </div>
             </div>
           )}
         </CardContent>

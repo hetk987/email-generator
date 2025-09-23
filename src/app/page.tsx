@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { render } from "@react-email/render";
 import { CodeEditor } from "@/components/CodeEditor";
 import { EmailPreview } from "@/components/EmailPreview";
@@ -11,37 +11,69 @@ import { Separator } from "@/components/ui/separator";
 import { Mail, Code, Eye } from "lucide-react";
 
 // Default template code
-const DEFAULT_TEMPLATE = `import { Html, Head, Body, Container, Text, Button, Section, Heading } from "@react-email/components";
-
-interface WelcomeEmailProps {
-  name?: string;
-  companyName?: string;
-  loginUrl?: string;
-}
-
-export const WelcomeEmail = ({ 
+const DEFAULT_TEMPLATE = `const WelcomeEmail = ({ 
   name = "User", 
   companyName = "Your Company",
   loginUrl = "https://example.com/login"
-}: WelcomeEmailProps) => (
-  <Html>
-    <Head />
-    <Body style={{ fontFamily: 'Arial, sans-serif', backgroundColor: '#f6f6f6', margin: 0, padding: 0 }}>
-      <Container style={{ margin: '0 auto', padding: '20px', maxWidth: '600px' }}>
-        <Section style={{ backgroundColor: '#ffffff', padding: '40px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-          <Heading style={{ color: '#333333', fontSize: '28px', marginBottom: '20px', textAlign: 'center' }}>
-            Welcome to {companyName}!
-          </Heading>
-          <Text style={{ color: '#666666', fontSize: '16px', lineHeight: '1.6', marginBottom: '20px' }}>
-            Hello {name},
-          </Text>
-          <Text style={{ color: '#666666', fontSize: '16px', lineHeight: '1.6', marginBottom: '30px' }}>
-            We're excited to have you join our community! Your account has been successfully created and you're ready to get started.
-          </Text>
-          <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-            <Button
-              href={loginUrl}
-              style={{
+} = {}) => {
+  return React.createElement(Html, null,
+    React.createElement(Head),
+    React.createElement(Body, { 
+      style: { 
+        fontFamily: 'Arial, sans-serif', 
+        backgroundColor: '#f6f6f6', 
+        margin: 0, 
+        padding: 0 
+      } 
+    },
+      React.createElement(Container, { 
+        style: { 
+          margin: '0 auto', 
+          padding: '20px', 
+          maxWidth: '600px' 
+        } 
+      },
+        React.createElement(Section, { 
+          style: { 
+            backgroundColor: '#ffffff', 
+            padding: '40px', 
+            borderRadius: '8px', 
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)' 
+          } 
+        },
+          React.createElement(Heading, { 
+            style: { 
+              color: '#333333', 
+              fontSize: '28px', 
+              marginBottom: '20px', 
+              textAlign: 'center' 
+            } 
+          }, "Welcome to " + companyName + "!"),
+          React.createElement(Text, { 
+            style: { 
+              color: '#666666', 
+              fontSize: '16px', 
+              lineHeight: '1.6', 
+              marginBottom: '20px' 
+            } 
+          }, "Hello " + name + ","),
+          React.createElement(Text, { 
+            style: { 
+              color: '#666666', 
+              fontSize: '16px', 
+              lineHeight: '1.6', 
+              marginBottom: '30px' 
+            } 
+          }, "We're excited to have you join our community! Your account has been successfully created and you're ready to get started."),
+          React.createElement('div', { 
+            style: { 
+              textAlign: 'center', 
+              marginBottom: '30px' 
+            } 
+          },
+            React.createElement(Button, {
+              href: loginUrl,
+              style: {
                 backgroundColor: '#007cba',
                 color: '#ffffff',
                 padding: '14px 28px',
@@ -50,83 +82,118 @@ export const WelcomeEmail = ({
                 display: 'inline-block',
                 fontSize: '16px',
                 fontWeight: 'bold'
-              }}
-            >
-              Get Started
-            </Button>
-          </div>
-          <Text style={{ color: '#999999', fontSize: '14px', lineHeight: '1.5', textAlign: 'center', marginTop: '30px' }}>
-            If you have any questions, feel free to reach out to our support team.
-          </Text>
-        </Section>
-      </Container>
-    </Body>
-  </Html>
-);`;
+              }
+            }, 'Get Started')
+          ),
+          React.createElement(Text, { 
+            style: { 
+              color: '#999999', 
+              fontSize: '14px', 
+              lineHeight: '1.5', 
+              textAlign: 'center', 
+              marginTop: '30px' 
+            } 
+          }, "If you have any questions, feel free to reach out to our support team.")
+        )
+      )
+    )
+  );
+};`;
 
 export default function EmailGenerator() {
   const [code, setCode] = useState(DEFAULT_TEMPLATE);
   const [htmlContent, setHtmlContent] = useState("");
   const [error, setError] = useState<string>("");
   const [showTemplates, setShowTemplates] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  const generateHtml = useCallback(async (templateCode: string) => {
+  const generateHtml = async () => {
+    if (!code.trim()) {
+      setError("Please enter some code to generate the email");
+      return;
+    }
+
+    setIsGenerating(true);
+    setError("");
+
     try {
-      setError("");
+      // Import React Email components first
+      const {
+        Html,
+        Head,
+        Body,
+        Container,
+        Text,
+        Button,
+        Section,
+        Heading,
+        Img,
+      } = await import("@react-email/components");
 
-      // Create a safe execution environment
-      const executeCode = new Function(`
-        const { render } = arguments[0];
-        ${templateCode}
+      // Create execution environment - much simpler approach
+      const executeTemplate = new Function(
+        "React",
+        "Html",
+        "Head",
+        "Body",
+        "Container",
+        "Text",
+        "Button",
+        "Section",
+        "Heading",
+        "Img",
+        `
+        ${code}
         
-        // Try to render the component
-        try {
-          const component = WelcomeEmail || PasswordResetEmail || NewsletterEmail;
-          if (component) {
-            return render(component({}));
-          } else {
-            throw new Error("No valid email component found. Please export WelcomeEmail, PasswordResetEmail, or NewsletterEmail.");
-          }
-        } catch (e) {
-          throw new Error("Failed to render component: " + e.message);
+        // Find and return the component
+        const component = WelcomeEmail || PasswordResetEmail || NewsletterEmail;
+        if (!component) {
+          throw new Error("No email component found. Please define WelcomeEmail, PasswordResetEmail, or NewsletterEmail.");
         }
-      `);
+        return component({});
+        `
+      );
 
-      const result = executeCode({ render });
-      setHtmlContent(result);
+      // Execute template with React and components
+      const emailElement = executeTemplate(
+        React,
+        Html,
+        Head,
+        Body,
+        Container,
+        Text,
+        Button,
+        Section,
+        Heading,
+        Img
+      );
+
+      // Render to HTML
+      const { render } = await import("@react-email/render");
+      const htmlResult = await render(emailElement);
+      setHtmlContent(htmlResult);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to generate email";
       setError(errorMessage);
       setHtmlContent("");
+    } finally {
+      setIsGenerating(false);
     }
-  }, []);
+  };
 
-  const handleCodeChange = useCallback(
-    (newCode: string) => {
-      setCode(newCode);
-      generateHtml(newCode);
-    },
-    [generateHtml]
-  );
+  const handleCodeChange = (newCode: string) => {
+    setCode(newCode);
+  };
 
-  const handleTemplateSelect = useCallback(
-    (template: any) => {
-      setCode(template.code);
-      setShowTemplates(false);
-      generateHtml(template.code);
-    },
-    [generateHtml]
-  );
+  const handleTemplateSelect = (template: { code: string }) => {
+    setCode(template.code);
+    setShowTemplates(false);
+  };
 
-  const handleShowTemplates = useCallback(() => {
+  const handleShowTemplates = () => {
     setShowTemplates(true);
-  }, []);
-
-  // Generate initial HTML on mount
-  useEffect(() => {
-    generateHtml(DEFAULT_TEMPLATE);
-  }, [generateHtml]);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -145,14 +212,26 @@ export default function EmailGenerator() {
                 </p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              onClick={handleShowTemplates}
-              className="flex items-center gap-2"
-            >
-              <Mail className="h-4 w-4" />
-              Templates
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={handleShowTemplates}
+                className="flex items-center gap-2"
+              >
+                <Mail className="h-4 w-4" />
+                Templates
+              </Button>
+              {!showTemplates && (
+                <Button
+                  onClick={generateHtml}
+                  disabled={isGenerating}
+                  className="flex items-center gap-2"
+                >
+                  <Eye className="h-4 w-4" />
+                  {isGenerating ? "Generating..." : "Generate Preview"}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -178,10 +257,21 @@ export default function EmailGenerator() {
             {/* Code Editor */}
             <Card className="flex flex-col">
               <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2">
-                  <Code className="h-5 w-5" />
-                  React Email Code
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Code className="h-5 w-5" />
+                    React Email Code
+                  </CardTitle>
+                  <Button
+                    onClick={generateHtml}
+                    disabled={isGenerating}
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <Eye className="h-4 w-4" />
+                    {isGenerating ? "Generating..." : "Generate"}
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="flex-1 p-0">
                 <div className="h-full">
@@ -196,7 +286,11 @@ export default function EmailGenerator() {
 
             {/* Email Preview */}
             <div className="flex flex-col">
-              <EmailPreview htmlContent={htmlContent} error={error} />
+              <EmailPreview
+                htmlContent={htmlContent}
+                error={error}
+                isLoading={isGenerating}
+              />
             </div>
           </div>
         )}
