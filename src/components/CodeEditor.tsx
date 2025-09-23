@@ -30,15 +30,28 @@ export function CodeEditor({
         onChange={handleEditorChange}
         theme="vs-dark"
         beforeMount={(monaco) => {
-          // Configure JavaScript mode for simplicity
+          // Disable TypeScript worker entirely to prevent errors
+          monaco.languages.typescript.typescriptDefaults.setWorkerOptions({
+            keepAliveWorkers: false,
+          });
+
+          // Configure JavaScript with JSX support
           monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
             target: monaco.languages.typescript.ScriptTarget.Latest,
             allowJs: true,
             checkJs: false,
+            jsx: monaco.languages.typescript.JsxEmit.ReactJSX,
             moduleResolution:
               monaco.languages.typescript.ModuleResolutionKind.NodeJs,
             module: monaco.languages.typescript.ModuleKind.ESNext,
             noEmit: true,
+            skipLibCheck: true,
+          });
+
+          // Disable diagnostics to prevent worker issues
+          monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+            noSemanticValidation: true,
+            noSyntaxValidation: false,
           });
         }}
         options={{
