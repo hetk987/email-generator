@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{}"
+self.__REACT_LOADABLE_MANIFEST="{\"../node_modules/@react-email/render/dist/browser/index.mjs -> react-dom/server.browser\":{\"id\":\"../node_modules/@react-email/render/dist/browser/index.mjs -> react-dom/server.browser\",\"files\":[\"static/chunks/_app-pages-browser_node_modules_next_dist_compiled_react-dom_server_browser_js.js\"]}}"
