@@ -469,6 +469,7 @@ export default function EmailGenerator() {
         </div>
       </div>
 
+
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6 h-[calc(100vh-200px)]">
         <ResizablePanels
