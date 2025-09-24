@@ -3,17 +3,38 @@
 import { Editor } from "@monaco-editor/react";
 import { useCallback } from "react";
 
+/**
+ * Props for the CodeEditor component
+ */
 interface CodeEditorProps {
+  /** Current code value displayed in the editor */
   value: string;
+  /** Callback fired when the code changes */
   onChange: (value: string) => void;
+  /** Height of the editor (default: "100%") */
   height?: string;
 }
+
+/**
+ * Monaco Code Editor Component
+ *
+ * A React wrapper around Monaco Editor configured for React Email development.
+ * Features:
+ * - JavaScript/JSX syntax highlighting and IntelliSense
+ * - React Email component type definitions
+ * - Tailwind CSS className support
+ * - Auto-completion and error detection
+ * - Dark theme optimized for development
+ */
 
 export function CodeEditor({
   value,
   onChange,
   height = "100%",
 }: CodeEditorProps) {
+  /**
+   * Handles editor value changes and normalizes undefined to empty string
+   */
   const handleEditorChange = useCallback(
     (value: string | undefined) => {
       onChange(value || "");
@@ -30,41 +51,55 @@ export function CodeEditor({
         onChange={handleEditorChange}
         theme="vs-dark"
         beforeMount={(monaco) => {
-          // Completely disable TypeScript workers to prevent errors
-          monaco.languages.typescript.typescriptDefaults.setWorkerOptions({
-            workerOptions: {
-              type: "disabled",
-            },
-          });
-
-          monaco.languages.typescript.javascriptDefaults.setWorkerOptions({
-            workerOptions: {
-              type: "disabled",
-            },
-          });
-
-          // Configure JavaScript with minimal settings
+          // Configure TypeScript compiler for JSX support
           monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
             target: monaco.languages.typescript.ScriptTarget.Latest,
             allowJs: true,
-            checkJs: false,
-            noLib: true,
-            noEmit: true,
-            skipLibCheck: true,
+            jsx: monaco.languages.typescript.JsxEmit.React,
+            esModuleInterop: true,
           });
 
-          // Disable all diagnostics and validation
-          monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
-            noSemanticValidation: true,
-            noSyntaxValidation: true,
-            noSuggestionDiagnostics: true,
-          });
+          // Add TypeScript definitions for React Email components
+          // This enables IntelliSense and autocomplete for React Email components
+          const reactEmailTypes = `
+            declare module 'react' {
+              export type ReactNode = any;
+              export function createElement(type: any, props?: any, ...children: any[]): any;
+              export const Fragment: any;
+            }
 
-          monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
-            noSemanticValidation: true,
-            noSyntaxValidation: true,
-            noSuggestionDiagnostics: true,
-          });
+            declare namespace JSX {
+              interface IntrinsicElements { 
+                [elemName: string]: {
+                  className?: string;
+                  style?: any;
+                  children?: any;
+                  href?: string;
+                  src?: string;
+                  alt?: string;
+                  [key: string]: any;
+                };
+              }
+            }
+
+            // React Email Components with className support
+            declare var Html: (props: {className?: string, children?: any}) => any;
+            declare var Head: (props: {className?: string, children?: any}) => any;
+            declare var Body: (props: {className?: string, children?: any}) => any;
+            declare var Container: (props: {className?: string, children?: any}) => any;
+            declare var Section: (props: {className?: string, children?: any}) => any;
+            declare var Text: (props: {className?: string, children?: any}) => any;
+            declare var Heading: (props: {className?: string, children?: any}) => any;
+            declare var Button: (props: {className?: string, href?: string, children?: any}) => any;
+            declare var Img: (props: {className?: string, src?: string, alt?: string}) => any;
+            declare var Tailwind: (props: {config?: any, children?: any}) => any;
+            declare var React: any;
+          `;
+
+          monaco.languages.typescript.javascriptDefaults.addExtraLib(
+            reactEmailTypes,
+            "react-email.d.ts"
+          );
         }}
         options={{
           minimap: { enabled: false },
@@ -72,38 +107,17 @@ export function CodeEditor({
           lineNumbers: "on",
           wordWrap: "on",
           automaticLayout: true,
-          scrollBeyondLastLine: false,
-          smoothScrolling: true,
-          cursorBlinking: "smooth",
-          formatOnPaste: false,
-          formatOnType: false,
-          quickSuggestions: false,
-          suggestOnTriggerCharacters: false,
-          acceptSuggestionOnEnter: "off",
-          tabCompletion: "off",
-          wordBasedSuggestions: "off",
-          parameterHints: { enabled: false },
-          hover: { enabled: false },
-          links: false,
-          contextmenu: false,
+          tabSize: 2,
+          insertSpaces: true,
+          formatOnPaste: true,
+          autoClosingBrackets: "always",
+          autoClosingQuotes: "always",
           bracketPairColorization: { enabled: true },
-          guides: {
-            bracketPairs: true,
-            indentation: true,
-          },
-          // Disable all language features that might trigger workers
-          folding: false,
-          foldingStrategy: "indentation",
-          showFoldingControls: "never",
-          unfoldOnClickAfterEnd: false,
-          renderWhitespace: "none",
-          renderControlCharacters: false,
-          renderIndentGuides: false,
-          renderLineHighlight: "none",
-          occurrencesHighlight: false,
-          selectionHighlight: false,
-          codeLens: false,
-          lightbulb: { enabled: false },
+          quickSuggestions: true,
+          suggestOnTriggerCharacters: true,
+          acceptSuggestionOnEnter: "on",
+          parameterHints: { enabled: true },
+          hover: { enabled: true },
         }}
       />
     </div>

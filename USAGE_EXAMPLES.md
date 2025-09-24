@@ -56,48 +56,37 @@ const WelcomeEmail = ({
 };
 ```
 
-## Full Tailwind CSS Support
+## Direct Tailwind CSS Support
 
-Use the `tw()` helper function to apply Tailwind CSS classes that get converted to inline styles. This supports a comprehensive set of Tailwind utilities:
+Use `className` directly on React Email components wrapped in the `<Tailwind>` component! This automatically converts Tailwind classes to inline styles for maximum email client compatibility:
 
 ```jsx
 const ModernEmail = ({ name = "User" } = {}) => {
   return (
     <Html>
       <Head />
-      <Body
-        style={{ fontFamily: "Arial, sans-serif", backgroundColor: "#f6f6f6" }}
-      >
-        <Container
-          style={{ margin: "0 auto", padding: "20px", maxWidth: "600px" }}
-        >
-          <Section style={{ ...tw("bg-white p-6 rounded-lg shadow-lg") }}>
-            <Heading
-              style={{
-                ...tw("text-2xl font-bold text-center mb-4"),
-                color: "#333333",
-              }}
-            >
-              Hello {name}!
-            </Heading>
-            <Text style={{ ...tw("text-gray-600 mb-6"), fontSize: "16px" }}>
-              This email uses Tailwind-like utility classes.
-            </Text>
-            <div style={tw("text-center")}>
-              <Button
-                href="#"
-                style={{
-                  ...tw("bg-blue-500 text-white py-4 px-4 rounded font-bold"),
-                  textDecoration: "none",
-                  display: "inline-block",
-                }}
-              >
-                Click Me
-              </Button>
-            </div>
-          </Section>
-        </Container>
-      </Body>
+      <Tailwind>
+        <Body className="font-sans bg-gray-100">
+          <Container className="mx-auto p-5 max-w-2xl">
+            <Section className="bg-white p-6 rounded-lg shadow-lg">
+              <Heading className="text-2xl font-bold text-center mb-4 text-gray-900">
+                Hello {name}!
+              </Heading>
+              <Text className="text-gray-600 mb-6 text-base">
+                This email uses Tailwind classes directly with className!
+              </Text>
+              <div className="text-center">
+                <Button
+                  href="#"
+                  className="bg-blue-500 text-white py-4 px-4 rounded font-bold no-underline inline-block"
+                >
+                  Click Me
+                </Button>
+              </div>
+            </Section>
+          </Container>
+        </Body>
+      </Tailwind>
     </Html>
   );
 };
@@ -105,7 +94,7 @@ const ModernEmail = ({ name = "User" } = {}) => {
 
 ## Supported Tailwind Classes
 
-The `tw()` helper supports a comprehensive set of Tailwind utilities:
+React Email supports ALL Tailwind utility classes via `className`. Here are some examples:
 
 ### Colors
 
@@ -161,7 +150,11 @@ The `tw()` helper supports a comprehensive set of Tailwind utilities:
 
 ## Tips
 
-1. Always use the object spread operator `...tw()` when combining with other styles
-2. You can mix Tailwind classes with custom CSS properties
-3. Remember to include `= {}` in your function parameters for default destructuring
-4. The email generator looks for `ShowcaseEmail`, `WelcomeEmail`, `PasswordResetEmail`, or `NewsletterEmail` functions
+1. **Always wrap your email content with `<Tailwind>` component** - this is required for className conversion!
+2. Use `className` directly on any React Email component inside the Tailwind wrapper
+3. You can still use `style` for custom CSS properties when needed
+4. Combine classes freely: `className="bg-blue-500 text-white p-4 rounded-lg font-bold"`
+5. Remember to include `= {}` in your function parameters for default destructuring
+6. The email generator looks for `ShowcaseEmail`, `WelcomeEmail`, `PasswordResetEmail`, or `NewsletterEmail` functions
+7. The `<Tailwind>` component automatically converts all className values to inline styles for email compatibility
+8. You can customize Tailwind config by passing a `config` prop to the `<Tailwind>` component
