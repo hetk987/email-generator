@@ -57,7 +57,9 @@ export function EmailPreview({
       <Card className="flex-1 flex flex-col">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Email Preview</CardTitle>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Actions</span>
+            </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"

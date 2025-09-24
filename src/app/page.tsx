@@ -4,6 +4,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { render } from "@react-email/render";
 import { CodeEditor } from "@/components/CodeEditor";
 import { EmailPreview } from "@/components/EmailPreview";
+import { ResizablePanels } from "@/components/ResizablePanels";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -469,16 +470,15 @@ export default function EmailGenerator() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-200px)]">
-          {/* Code Editor */}
-          <Card className="flex flex-col">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Code className="h-5 w-5" />
-                  React Email Code
-                </CardTitle>
+      <div className="container mx-auto px-4 py-6 h-[calc(100vh-200px)]">
+        <ResizablePanels
+          leftPanel={
+            <div className="h-full flex flex-col">
+              <div className="flex items-center justify-between p-3 border-b bg-card">
+                <div className="flex items-center gap-2">
+                  <Code className="h-4 w-4" />
+                  <span className="font-medium text-sm">React Email Code</span>
+                </div>
                 <Button
                   onClick={generateHtml}
                   disabled={isGenerating}
@@ -489,27 +489,27 @@ export default function EmailGenerator() {
                   {isGenerating ? "Generating..." : "Generate"}
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent className="flex-1 p-0">
-              <div className="h-full">
+              <div className="flex-1">
                 <CodeEditor
                   value={code}
                   onChange={handleCodeChange}
                   height="100%"
                 />
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Email Preview */}
-          <div className="flex flex-col">
+            </div>
+          }
+          rightPanel={
             <EmailPreview
               htmlContent={htmlContent}
               error={error}
               isLoading={isGenerating}
             />
-          </div>
-        </div>
+          }
+          leftTitle="Code Editor"
+          rightTitle="Email Preview"
+          initialSplitRatio={0.5}
+          minPanelWidth={250}
+        />
       </div>
     </div>
   );
