@@ -206,7 +206,7 @@ export default function EmailGenerator() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background align-middle flex flex-col ">
       {/* Application Header */}
       <header className="border-b bg-card shadow-sm">
         <div className="container mx-auto px-4 py-6">
@@ -219,9 +219,6 @@ export default function EmailGenerator() {
                 <h1 className="text-2xl font-bold text-brand-primary">
                   TD Email Generator
                 </h1>
-                <p className="text-muted-foreground font-medium">
-                  Create beautiful emails with React Email & Tailwind CSS
-                </p>
               </div>
             </div>
             <div className="flex items-center gap-4">

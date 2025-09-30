@@ -1,7 +1,7 @@
 "use client";
 
 import { Editor } from "@monaco-editor/react";
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 
 /**
  * Props for the CodeEditor component
@@ -32,6 +32,8 @@ export function CodeEditor({
   onChange,
   height = "100%",
 }: CodeEditorProps) {
+  const editorRef = useRef<any>(null);
+
   /**
    * Handles editor value changes and normalizes undefined to empty string
    */
@@ -42,6 +44,22 @@ export function CodeEditor({
     [onChange]
   );
 
+  const handleEditorDidMount = useCallback(
+    (editor: any, monaco: any) => {
+      editorRef.current = editor;
+
+      // Create a model with a specific URI to avoid inmemory issues
+      const model = monaco.editor.createModel(
+        value,
+        "javascript",
+        monaco.Uri.parse("file:///email-template.js")
+      );
+
+      editor.setModel(model);
+    },
+    [value]
+  );
+
   return (
     <div className="h-full w-full">
       <Editor
@@ -50,6 +68,7 @@ export function CodeEditor({
         value={value}
         onChange={handleEditorChange}
         theme="vs-dark"
+        onMount={handleEditorDidMount}
         beforeMount={(monaco) => {
           // Configure TypeScript compiler for JSX support
           monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
