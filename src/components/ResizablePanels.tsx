@@ -120,7 +120,10 @@ export function ResizablePanels({
   }, [toggleLeftFullscreen, toggleRightFullscreen]);
 
   return (
-    <div ref={containerRef} className="flex h-full w-full relative">
+    <div
+      ref={containerRef}
+      className="flex h-full w-full relative border border-border rounded-xl shadow-brand bg-card overflow-hidden"
+    >
       {/* Left Panel */}
       <div
         className={`transition-all duration-200 ease-in-out ${
@@ -139,13 +142,15 @@ export function ResizablePanels({
         }}
       >
         <div className="h-full w-full flex flex-col">
-          <div className="flex items-center justify-between p-3 border-b bg-card">
-            <h3 className="font-semibold text-sm">{leftTitle}</h3>
+          <div className="flex items-center justify-between p-3 border-b border-border bg-card">
+            <h3 className="font-semibold text-sm text-brand-primary">
+              {leftTitle}
+            </h3>
             <Button
               variant="ghost"
               size="sm"
               onClick={toggleLeftFullscreen}
-              className="h-6 w-6 p-0"
+              className="h-6 w-6 p-0 text-brand-primary hover:bg-brand-accent/10 transition-smooth"
               title={`${isLeftFullscreen ? "Exit" : "Enter"} fullscreen (Ctrl/Cmd + 1)`}
             >
               {isLeftFullscreen ? (
@@ -162,13 +167,13 @@ export function ResizablePanels({
       {/* Resize Handle */}
       {!isLeftFullscreen && !isRightFullscreen && (
         <div
-          className={`w-1 bg-border hover:bg-primary/50 cursor-col-resize flex-shrink-0 transition-colors ${
-            isDragging ? "bg-primary" : ""
+          className={`w-1 bg-border hover:bg-brand-primary/50 cursor-col-resize flex-shrink-0 transition-colors ${
+            isDragging ? "bg-brand-primary" : ""
           }`}
           onMouseDown={handleMouseDown}
         >
           <div className="w-full h-full flex items-center justify-center">
-            <div className="w-0.5 h-8 bg-muted-foreground/30 rounded-full"></div>
+            <div className="w-0.5 h-8 bg-brand-primary/40 rounded-full"></div>
           </div>
         </div>
       )}
@@ -191,13 +196,15 @@ export function ResizablePanels({
         }}
       >
         <div className="h-full w-full flex flex-col">
-          <div className="flex items-center justify-between p-3 border-b bg-card">
-            <h3 className="font-semibold text-sm">{rightTitle}</h3>
+          <div className="flex items-center justify-between p-3 border-b border-border bg-card">
+            <h3 className="font-semibold text-sm text-brand-primary">
+              {rightTitle}
+            </h3>
             <Button
               variant="ghost"
               size="sm"
               onClick={toggleRightFullscreen}
-              className="h-6 w-6 p-0"
+              className="h-6 w-6 p-0 text-brand-primary hover:bg-brand-accent/10 transition-smooth"
               title={`${isRightFullscreen ? "Exit" : "Enter"} fullscreen (Ctrl/Cmd + 2)`}
             >
               {isRightFullscreen ? (
@@ -212,10 +219,10 @@ export function ResizablePanels({
       </div>
 
       {/* Keyboard shortcuts hint */}
-      <div className="absolute bottom-4 right-4 text-xs text-muted-foreground bg-background/80 backdrop-blur-sm px-2 py-1 rounded border">
-        <div>Ctrl/Cmd + 1: Toggle left fullscreen</div>
-        <div>Ctrl/Cmd + 2: Toggle right fullscreen</div>
-        <div>Ctrl/Cmd + 0: Reset to split view</div>
+      <div className="absolute bottom-4 right-4 text-xs text-brand-primary bg-card/90 backdrop-blur-sm px-3 py-2 rounded-lg border border-border shadow-brand">
+        <div className="font-medium">Ctrl/Cmd + 1: Toggle left fullscreen</div>
+        <div className="font-medium">Ctrl/Cmd + 2: Toggle right fullscreen</div>
+        <div className="font-medium">Ctrl/Cmd + 0: Reset to split view</div>
       </div>
     </div>
   );

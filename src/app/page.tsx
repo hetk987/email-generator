@@ -208,31 +208,37 @@ export default function EmailGenerator() {
   return (
     <div className="min-h-screen bg-background">
       {/* Application Header */}
-      <header className="border-b bg-card">
+      <header className="border-b bg-card shadow-sm">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Mail className="h-6 w-6 text-primary" />
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-brand-primary rounded-xl shadow-brand">
+                <Mail className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">Email Generator</h1>
-                <p className="text-muted-foreground">
+                <h1 className="text-2xl font-bold text-brand-primary">
+                  TD Email Generator
+                </h1>
+                <p className="text-muted-foreground font-medium">
                   Create beautiful emails with React Email & Tailwind CSS
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-4">
               {detectedFunction && (
-                <div className="text-sm text-muted-foreground">
-                  <span className="font-medium">Function:</span>{" "}
-                  {detectedFunction}
+                <div className="px-3 py-2 bg-brand-light/30 rounded-lg border border-brand-accent/20">
+                  <div className="text-sm text-brand-primary font-medium">
+                    <span className="text-muted-foreground">Function:</span>{" "}
+                    <code className="px-2 py-1 bg-brand-primary/10 rounded text-brand-primary">
+                      {detectedFunction}
+                    </code>
+                  </div>
                 </div>
               )}
               <Button
                 onClick={generateHtml}
                 disabled={isGenerating}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 bg-brand-primary hover:bg-brand-primary/90 text-white shadow-brand transition-smooth hover-lift"
               >
                 <Eye className="h-4 w-4" />
                 {isGenerating ? "Generating..." : "Generate Preview"}
@@ -250,12 +256,18 @@ export default function EmailGenerator() {
           onValueChange={setActiveTab}
           className="h-full flex flex-col"
         >
-          <TabsList className="justify-start w-fit">
-            <TabsTrigger value="editor">
+          <TabsList className="justify-start w-fit bg-card border border-border rounded-xl p-1 shadow-sm">
+            <TabsTrigger
+              value="editor"
+              className="data-[state=active]:bg-brand-primary data-[state=active]:text-white data-[state=active]:shadow-brand transition-smooth"
+            >
               <Code className="w-4 h-4 mr-2" />
               Editor
             </TabsTrigger>
-            <TabsTrigger value="templates">
+            <TabsTrigger
+              value="templates"
+              className="data-[state=active]:bg-brand-primary data-[state=active]:text-white data-[state=active]:shadow-brand transition-smooth"
+            >
               <Palette className="w-4 h-4 mr-2" />
               Templates
             </TabsTrigger>
@@ -263,11 +275,13 @@ export default function EmailGenerator() {
           <TabsContent value="editor" className="flex-1">
             <ResizablePanels
               leftPanel={
-                <div className="h-full flex flex-col">
-                  <div className="flex items-center justify-between p-3 border-b bg-card">
-                    <div className="flex items-center gap-2">
-                      <Code className="h-4 w-4" />
-                      <span className="font-medium text-sm">
+                <div className="h-full flex flex-col bg-card rounded-xl border border-border shadow-brand">
+                  <div className="flex items-center justify-between p-4 border-b border-border bg-card rounded-t-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-brand-primary rounded-lg">
+                        <Code className="h-4 w-4 text-white" />
+                      </div>
+                      <span className="font-semibold text-sm text-brand-primary">
                         React Email Code
                       </span>
                     </div>
@@ -275,13 +289,13 @@ export default function EmailGenerator() {
                       onClick={generateHtml}
                       disabled={isGenerating}
                       size="sm"
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 bg-brand-primary hover:bg-brand-primary/90 text-white shadow-brand transition-smooth hover-lift"
                     >
                       <Eye className="h-4 w-4" />
                       {isGenerating ? "Generating..." : "Generate"}
                     </Button>
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 rounded-b-xl overflow-hidden">
                     <CodeEditor
                       value={code}
                       onChange={handleCodeChange}

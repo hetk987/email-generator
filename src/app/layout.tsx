@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Email Generator",
+  title: "TD Email Generator",
   description: "Create beautiful emails with React Email",
 };
 

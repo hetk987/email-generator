@@ -25,8 +25,10 @@ export function TemplateGallery({ onTemplateSelect }: TemplateGalleryProps) {
       {/* Header */}
       <div className="border-b border-border bg-card p-6">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl font-bold mb-2">Find your Template</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-2xl font-bold mb-2 text-brand-primary">
+            Find your Template
+          </h2>
+          <p className="text-muted-foreground font-medium">
             Jumpstart your email development process with pre-built solutions
             from our community.
           </p>
@@ -40,24 +42,28 @@ export function TemplateGallery({ onTemplateSelect }: TemplateGalleryProps) {
             {templates.map((template) => (
               <Card
                 key={template.id}
-                className="group hover:shadow-lg transition-all duration-200 cursor-pointer border border-border bg-card"
+                className="group hover:shadow-brand-lg transition-smooth hover-lift cursor-pointer border border-border bg-card shadow-sm"
               >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      {template.icon}
-                      <CardTitle className="text-sm font-semibold">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-brand-primary rounded-lg text-white">
+                        {template.icon}
+                      </div>
+                      <CardTitle className="text-sm font-semibold text-brand-primary">
                         {template.name}
                       </CardTitle>
                     </div>
-                    <Badge className="text-xs">{template.category}</Badge>
+                    <div className="px-3 py-1 bg-brand-accent/20 text-brand-primary text-xs font-medium rounded-full border border-brand-accent/30">
+                      {template.category}
+                    </div>
                   </div>
-                  <CardDescription className="text-xs text-muted-foreground mb-4">
+                  <CardDescription className="text-sm text-muted-foreground mb-6 leading-relaxed">
                     {template.description}
                   </CardDescription>
                   <Button
                     size="sm"
-                    className="w-full"
+                    className="w-full bg-brand-primary hover:bg-brand-primary/90 text-white shadow-brand transition-smooth hover-scale"
                     onClick={() => onTemplateSelect(template.code)}
                   >
                     Use Template
