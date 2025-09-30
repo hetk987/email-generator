@@ -1,9 +1,18 @@
 import type React from "react";
-import { Mail, Zap, ShoppingBag, Calendar, Users, Shield } from "lucide-react";
+import {
+  Mail,
+  Zap,
+  ShoppingBag,
+  Calendar,
+  Users,
+  Shield,
+  Code,
+} from "lucide-react";
 import { DEFAULT_TEMPLATE } from "./default";
 import { newsletterTemplate } from "./newsletter-templates";
 import { orderConfirmationTemplate } from "./order-confirmation";
 import { eventInvitationTemplate } from "./event-invitation";
+import { importExampleTemplate } from "./import-example";
 
 export interface Template {
   id: string;
@@ -18,6 +27,10 @@ export const templates: Template[] = [
   {
     ...DEFAULT_TEMPLATE,
     icon: <Mail className="w-5 h-5" />,
+  },
+  {
+    ...importExampleTemplate,
+    icon: <Code className="w-5 h-5" />,
   },
   {
     ...newsletterTemplate,
@@ -36,6 +49,7 @@ export const templates: Template[] = [
 export const categories = [
   "All",
   "Onboarding",
+  "Examples",
   "Marketing",
   "E-commerce",
   "Events",

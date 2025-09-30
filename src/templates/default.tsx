@@ -4,33 +4,25 @@ export const DEFAULT_TEMPLATE = {
   description: "A warm welcome email for new users with onboarding steps",
   category: "Onboarding",
   code: `const ShowcaseEmail = ({
-    name = "Alex Johnson",
-    companyName = "Acme Corporation",
-    productName = "Premium Suite",
-    price = "$99",
-    logoUrl = "https://via.placeholder.com/150x60/3b82f6/ffffff?text=ACME"
-  } = {}) => {
-    return (
-      <Html>
+  name = "Alex Johnson",
+  companyName = "Acme Corporation",
+  productName = "Premium Suite",
+  price = "$99"
+} = {}) => {
+  return (
+    <Html>
+      <Tailwind>
         <Head />
-        <Tailwind>
-          <Body className="font-sans bg-gray-100 m-0 p-0">
-            <Container className="mx-auto max-w-2xl p-5">
-              
-              {/* Header Section */}
-              <Section className="bg-white rounded-lg shadow-md mb-6 p-6">
-                <Img 
-                  src={logoUrl}
-                  alt={companyName}
-                  className="mx-auto block mb-4 h-15"
-                />
-                <Heading className="text-3xl font-bold text-center text-gray-900 mb-2">
-                  Component Showcase Email
-                </Heading>
-                <Text className="text-center text-gray-600 text-lg">
-                  This email demonstrates all React Email components with Tailwind styling
-                </Text>
-              </Section>
+        <Body className="font-sans bg-gray-100 m-0 p-0">
+          <Container className="mx-auto max-w-2xl p-5">
+            
+            {/* Header Section using custom component */}
+            <Header 
+              logoUrl={logoUrl}
+              companyName={companyName}
+              title="Component Showcase Email"
+              subtitle="This email demonstrates custom components with Tailwind styling"
+            />
   
               {/* Welcome Section */}
               <Section className="bg-blue-50 rounded-lg p-6 mb-6">
@@ -46,8 +38,8 @@ export const DEFAULT_TEMPLATE = {
                 </Text>
               </Section>
   
-              {/* Product Features */}
-              <Section className="bg-white rounded-lg shadow-md p-6 mb-6">
+              {/* Product Features using Card component */}
+              <Card variant="elevated" className="mb-6">
                 <Heading className="text-xl font-semibold text-gray-900 mb-4">
                   🚀 {productName} Features
                 </Heading>
@@ -78,10 +70,10 @@ export const DEFAULT_TEMPLATE = {
                     Work seamlessly with your team members
                   </Text>
                 </div>
-              </Section>
+              </Card>
   
-              {/* Pricing Card */}
-              <Section className="bg-blue-600 rounded-xl p-6 text-center mb-6">
+              {/* Pricing Card using Card component */}
+              <Card className="bg-blue-600 text-center mb-6">
                 <Heading className="text-2xl font-bold text-white mb-2">
                   Special Launch Offer
                 </Heading>
@@ -91,13 +83,15 @@ export const DEFAULT_TEMPLATE = {
                 <Text className="text-4xl font-bold text-white mb-4">
                   {price}<span className="text-lg font-normal">/month</span>
                 </Text>
-                <Button
+                <CustomButton
                   href="https://example.com/subscribe"
-                  className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold no-underline inline-block"
+                  variant="primary"
+                  size="lg"
+                  className="bg-white text-blue-600 hover:bg-gray-100"
                 >
                   Start Free Trial
-                </Button>
-              </Section>
+                </CustomButton>
+              </Card>
   
               {/* Alert/Notice Section */}
               <Section className="bg-red-50 border-2 border-red-200 rounded-lg p-4 mb-6">
@@ -117,46 +111,37 @@ export const DEFAULT_TEMPLATE = {
                 </Text>
               </Section>
   
-              {/* Action Buttons */}
+              {/* Action Buttons using CustomButton components */}
               <Section className="text-center mb-6">
                 <Heading className="text-lg font-semibold text-gray-900 mb-4">
                   Quick Actions
                 </Heading>
                 <div className="text-center">
-                  <Button
+                  <CustomButton
                     href="https://example.com/dashboard"
-                    className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium no-underline inline-block mr-3 mb-2"
+                    variant="primary"
+                    size="md"
+                    className="mr-3 mb-2"
                   >
                     Go to Dashboard
-                  </Button>
-                  <Button
+                  </CustomButton>
+                  <CustomButton
                     href="https://example.com/support"
-                    className="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg font-medium no-underline inline-block mb-2"
+                    variant="secondary"
+                    size="md"
+                    className="mb-2"
                   >
                     Contact Support
-                  </Button>
+                  </CustomButton>
                 </div>
               </Section>
   
-              {/* Footer */}
-              <Section className="bg-gray-100 rounded-lg p-6 text-center">
-                <Text className="text-gray-600 text-sm mb-2">
-                  © 2024 {companyName}. All rights reserved.
-                </Text>
-                <Text className="text-gray-500 text-xs mb-3">
-                  123 Business Street, Suite 100, City, ST 12345
-                </Text>
-                <Text className="text-gray-500 text-xs">
-                  You're receiving this email because you signed up for {companyName}.
-                  <br />
-                  <a href="#" className="text-blue-600 underline">
-                    Unsubscribe
-                  </a> | 
-                  <a href="#" className="text-blue-600 underline">
-                    Update Preferences
-                  </a>
-                </Text>
-              </Section>
+              {/* Footer using custom Footer component */}
+              <Footer 
+                companyName={companyName}
+                address="123 Business Street, Suite 100, City, ST 12345"
+                showUnsubscribe={true}
+              />
               
             </Container>
           </Body>

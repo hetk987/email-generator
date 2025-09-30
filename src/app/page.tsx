@@ -45,10 +45,11 @@ export default function EmailGenerator() {
    * Process:
    * 1. Validates input code
    * 2. Imports React Email components dynamically
-   * 3. Transforms JSX to JavaScript using Babel
-   * 4. Executes the transformed code in a sandboxed environment
-   * 5. Renders the React component to HTML using React Email's render function
-   * 6. Updates the preview with the generated HTML
+   * 3. Imports custom components and assets
+   * 4. Transforms JSX to JavaScript using Babel
+   * 5. Executes the transformed code in a sandboxed environment
+   * 6. Renders the React component to HTML using React Email's render function
+   * 7. Updates the preview with the generated HTML
    */
   const generateHtml = async () => {
     // Input validation
@@ -76,7 +77,13 @@ export default function EmailGenerator() {
         Tailwind,
       } = await import("@react-email/components");
 
-      // Step 2: Transform JSX to JavaScript using Babel
+      // Step 2: Import custom components and assets
+      const { CustomButton, Card, Header, Footer } = await import(
+        "@/components/email"
+      );
+      const { logoUrl, heroBgUrl } = await import("@/assets");
+
+      // Step 3: Transform JSX to JavaScript using Babel
       const { transform } = await import("@babel/standalone");
 
       let transformedCode;
@@ -93,7 +100,7 @@ export default function EmailGenerator() {
         transformedCode = code;
       }
 
-      // Step 3: Create sandboxed execution environment
+      // Step 4: Create sandboxed execution environment
       // The Tailwind component automatically handles className → inline styles conversion
       const executeTemplate = new Function(
         "React",
@@ -107,6 +114,12 @@ export default function EmailGenerator() {
         "Heading",
         "Img",
         "Tailwind",
+        "CustomButton",
+        "Card",
+        "Header",
+        "Footer",
+        "logoUrl",
+        "heroBgUrl",
         "transformedCode",
         `
         ${transformedCode}
@@ -137,7 +150,7 @@ export default function EmailGenerator() {
         `
       );
 
-      // Step 4: Execute the template code with React Email components
+      // Step 5: Execute the template code with React Email components and custom components
       const emailElement = executeTemplate(
         React,
         Html,
@@ -150,15 +163,21 @@ export default function EmailGenerator() {
         Heading,
         Img,
         Tailwind,
+        CustomButton,
+        Card,
+        Header,
+        Footer,
+        logoUrl,
+        heroBgUrl,
         transformedCode
       );
 
-      // Step 5: Capture the detected function name
+      // Step 6: Capture the detected function name
       const detectedFunctionName =
         (window as any).detectedFunctionName || "Unknown";
       setDetectedFunction(detectedFunctionName);
 
-      // Step 6: Render React component to email-compatible HTML
+      // Step 7: Render React component to email-compatible HTML
       const { render } = await import("@react-email/render");
       const htmlResult = await render(emailElement);
       setHtmlContent(htmlResult);

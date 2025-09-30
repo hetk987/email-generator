@@ -6,8 +6,8 @@ export const orderConfirmationTemplate = {
   code: `const OrderConfirmation = ({ orderNumber = "12345", customerName = "Jane Smith" }) => {
     return (
       <Html>
-        <Head />
         <Tailwind>
+          <Head />
           <Body className="bg-gray-50 font-sans">
             <Container className="mx-auto max-w-2xl p-6">
               <Section className="bg-white rounded-lg p-8">

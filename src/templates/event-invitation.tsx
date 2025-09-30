@@ -6,8 +6,8 @@ export const eventInvitationTemplate = {
   code: `const EventInvitation = ({ eventName = "Annual Conference", date = "March 15, 2024" }) => {
     return (
       <Html>
-        <Head />
         <Tailwind>
+          <Head />
           <Body className="bg-gradient-to-br from-blue-50 to-indigo-100 font-sans">
             <Container className="mx-auto max-w-2xl p-6">
               <Section className="bg-white rounded-xl p-8 shadow-lg">

@@ -6,8 +6,8 @@ export const newsletterTemplate = {
   code: `const Newsletter = ({ articles = [] }) => {
     return (
       <Html>
-        <Head />
         <Tailwind>
+          <Head />
           <Body className="bg-gray-100 font-sans">
             <Container className="mx-auto max-w-2xl">
               <Section className="bg-white p-8">

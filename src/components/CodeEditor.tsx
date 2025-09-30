@@ -59,7 +59,7 @@ export function CodeEditor({
             esModuleInterop: true,
           });
 
-          // Add TypeScript definitions for React Email components
+          // Add TypeScript definitions for React Email components and custom components
           // This enables IntelliSense and autocomplete for React Email components
           const reactEmailTypes = `
             declare module 'react' {
@@ -94,6 +94,41 @@ export function CodeEditor({
             declare var Img: (props: {className?: string, src?: string, alt?: string}) => any;
             declare var Tailwind: (props: {config?: any, children?: any}) => any;
             declare var React: any;
+
+            // Custom Email Components - Available globally
+            declare var CustomButton: (props: {
+              href?: string;
+              className?: string;
+              children?: any;
+              variant?: 'primary' | 'secondary' | 'outline';
+              size?: 'sm' | 'md' | 'lg';
+            }) => any;
+            
+            declare var Card: (props: {
+              className?: string;
+              children?: any;
+              variant?: 'default' | 'elevated' | 'outlined';
+              padding?: 'sm' | 'md' | 'lg';
+            }) => any;
+            
+            declare var Header: (props: {
+              logoUrl?: string;
+              companyName?: string;
+              title?: string;
+              subtitle?: string;
+              className?: string;
+            }) => any;
+            
+            declare var Footer: (props: {
+              companyName?: string;
+              address?: string;
+              showUnsubscribe?: boolean;
+              className?: string;
+            }) => any;
+
+            // Assets - Available globally
+            declare var logoUrl: string;
+            declare var heroBgUrl: string;
           `;
 
           monaco.languages.typescript.javascriptDefaults.addExtraLib(
