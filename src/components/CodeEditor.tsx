@@ -1,7 +1,8 @@
 "use client";
 
 import { Editor } from "@monaco-editor/react";
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useContext, useState, useEffect } from "react";
+import { ThemeContext } from "@/contexts/ThemeContext";
 
 /**
  * Props for the CodeEditor component
@@ -33,6 +34,16 @@ export function CodeEditor({
   height = "100%",
 }: CodeEditorProps) {
   const editorRef = useRef<any>(null);
+  const [mounted, setMounted] = useState(false);
+  const themeContext = useContext(ThemeContext);
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Default to light theme if context is not available
+  const theme = themeContext?.theme || "light";
 
   /**
    * Handles editor value changes and normalizes undefined to empty string
@@ -67,7 +78,7 @@ export function CodeEditor({
         defaultLanguage="javascript"
         value={value}
         onChange={handleEditorChange}
-        theme="vs-dark"
+        theme={theme === "dark" ? "vs-dark" : "vs-light"}
         onMount={handleEditorDidMount}
         beforeMount={(monaco) => {
           // Configure TypeScript compiler for JSX support

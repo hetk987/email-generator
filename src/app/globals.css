@@ -44,25 +44,25 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 222.2 84% 2.5%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 222.2 84% 3.5%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 222.2 84% 3.5%;
     --popover-foreground: 210 40% 98%;
-    --primary: 197 100% 45%;
+    --primary: 197 60% 35%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 217.2 32.6% 12%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
+    --muted: 217.2 32.6% 12%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 180 100% 60%;
+    --accent: 180 60% 30%;
     --accent-foreground: 0 0% 0%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 197 100% 45%;
+    --border: 217.2 32.6% 12%;
+    --input: 217.2 32.6% 12%;
+    --ring: 197 60% 35%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
@@ -70,9 +70,9 @@
     --chart-5: 340 75% 55%;
 
     /* Brand Colors - Dark Mode */
-    --brand-primary: 197 100% 45%;
-    --brand-accent: 180 100% 60%;
-    --brand-light: 180 100% 10%;
+    --brand-primary: 197 60% 25%;
+    --brand-accent: 180 60% 30%;
+    --brand-light: 180 30% 8%;
     --brand-gradient: linear-gradient(135deg, #367cb1 0%, #82eee7 100%);
     --brand-gradient-subtle: linear-gradient(
       135deg,

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Mail, Code, Eye, Palette } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TemplateGallery } from "@/components/TemplateGallery";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { DEFAULT_TEMPLATE } from "@/templates/default";
 
 /**
@@ -232,6 +233,7 @@ export default function EmailGenerator() {
                   </div>
                 </div>
               )}
+              <ThemeToggle />
               <Button
                 onClick={generateHtml}
                 disabled={isGenerating}
