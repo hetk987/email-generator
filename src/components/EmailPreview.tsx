@@ -55,7 +55,7 @@ export function EmailPreview({
   return (
     <div className="flex flex-col h-full">
       <Card className="flex-1 flex flex-col bg-card border border-border shadow-brand">
-        <CardHeader className="pb-4 bg-card border-b border-border rounded-t-xl">
+        <CardHeader className="p-4 bg-card border-b border-border rounded-t-xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-brand-primary rounded-lg">

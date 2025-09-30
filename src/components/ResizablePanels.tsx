@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Maximize, Minimize } from "lucide-react";
+import { Maximize, Minimize, X } from "lucide-react";
 
 interface ResizablePanelsProps {
   leftPanel: React.ReactNode;
@@ -25,6 +25,7 @@ export function ResizablePanels({
   const [isDragging, setIsDragging] = useState(false);
   const [isLeftFullscreen, setIsLeftFullscreen] = useState(false);
   const [isRightFullscreen, setIsRightFullscreen] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Calculate pixel values
@@ -219,11 +220,31 @@ export function ResizablePanels({
       </div>
 
       {/* Keyboard shortcuts hint */}
-      <div className="absolute bottom-4 right-4 text-xs text-brand-primary bg-card/90 backdrop-blur-sm px-3 py-2 rounded-lg border border-border shadow-brand">
-        <div className="font-medium">Ctrl/Cmd + 1: Toggle left fullscreen</div>
-        <div className="font-medium">Ctrl/Cmd + 2: Toggle right fullscreen</div>
-        <div className="font-medium">Ctrl/Cmd + 0: Reset to split view</div>
-      </div>
+      {showShortcuts && (
+        <div className="absolute bottom-4 right-4 text-xs text-brand-primary bg-card/90 backdrop-blur-sm px-3 py-2 rounded-lg border border-border shadow-brand">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <span className="font-semibold text-brand-primary">
+              Keyboard Shortcuts
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowShortcuts(false)}
+              className="h-4 w-4 p-0 text-brand-primary hover:bg-brand-accent/10 transition-smooth"
+              title="Close shortcuts"
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+          <div className="font-medium">
+            Ctrl/Cmd + 1: Toggle left fullscreen
+          </div>
+          <div className="font-medium">
+            Ctrl/Cmd + 2: Toggle right fullscreen
+          </div>
+          <div className="font-medium">Ctrl/Cmd + 0: Reset to split view</div>
+        </div>
+      )}
     </div>
   );
 }
