@@ -23,8 +23,8 @@ export interface GoogleDriveUser {
 }
 
 /**
- * Client-side Google Drive service using Google Identity Services and Drive API
- * Uses OAuth 2.0 implicit flow for authentication
+ * Client-side Google Drive service using Google Identity Services (GIS)
+ * Uses modern OAuth 2.0 flow for authentication
  */
 export class GoogleDriveService {
     private static instance: GoogleDriveService;
@@ -34,6 +34,7 @@ export class GoogleDriveService {
     private accessToken: string | null = null;
     private appFolderId: string | null = null;
     private appFolderName = 'Email Generator Templates';
+    private gapiLoaded = false;
 
     private constructor() { }
 
@@ -126,6 +127,7 @@ export class GoogleDriveService {
                         discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
                         scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly'
                     });
+                    this.gapiLoaded = true;
                     resolve();
                 } catch (error) {
                     console.error('GAPI client init error:', error);
@@ -153,16 +155,31 @@ export class GoogleDriveService {
     }
 
     /**
-     * Load user information
+     * Load user information using Google Identity Services
      */
     private async loadUserInfo(): Promise<void> {
         try {
-            const response = await window.gapi.client.oauth2.userinfo.get();
+            if (!this.accessToken) {
+                throw new Error('No access token available');
+            }
+
+            // Use Google Identity Services to get user info
+            const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+                headers: {
+                    'Authorization': `Bearer ${this.accessToken}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch user info');
+            }
+
+            const userInfo = await response.json();
             this.currentUser = {
-                id: response.result.id,
-                email: response.result.email,
-                name: response.result.name,
-                picture: response.result.picture
+                id: userInfo.id,
+                email: userInfo.email,
+                name: userInfo.name,
+                picture: userInfo.picture
             };
         } catch (error) {
             console.error('Failed to load user info:', error);
@@ -171,7 +188,7 @@ export class GoogleDriveService {
     }
 
     /**
-     * Sign in to Google Drive
+     * Sign in to Google Drive using Google Identity Services
      */
     public async signIn(): Promise<GoogleDriveUser> {
         if (typeof window === 'undefined') {
@@ -183,10 +200,17 @@ export class GoogleDriveService {
         }
 
         return new Promise((resolve, reject) => {
-            window.gapi.auth2.getAuthInstance().signIn().then(
-                async (googleUser: any) => {
+            // Use Google Identity Services for authentication
+            window.google.accounts.oauth2.initTokenClient({
+                client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+                scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
+                callback: async (response: any) => {
                     try {
-                        this.accessToken = googleUser.getAuthResponse().access_token;
+                        if (response.error) {
+                            throw new Error(response.error);
+                        }
+
+                        this.accessToken = response.access_token;
                         if (this.accessToken) {
                             localStorage.setItem('google_access_token', this.accessToken);
                         }
@@ -199,12 +223,8 @@ export class GoogleDriveService {
                         console.error('Sign in error:', error);
                         reject(error);
                     }
-                },
-                (error: any) => {
-                    console.error('Sign in failed:', error);
-                    reject(error);
                 }
-            );
+            }).requestAccessToken();
         });
     }
 
@@ -217,11 +237,9 @@ export class GoogleDriveService {
         }
 
         try {
-            if (window.gapi.auth2) {
-                const authInstance = window.gapi.auth2.getAuthInstance();
-                if (authInstance) {
-                    await authInstance.signOut();
-                }
+            // Use Google Identity Services to revoke token
+            if (this.accessToken && window.google?.accounts?.oauth2) {
+                window.google.accounts.oauth2.revoke(this.accessToken);
             }
 
             this.isSignedIn = false;
@@ -260,27 +278,47 @@ export class GoogleDriveService {
         }
 
         try {
+            if (!this.accessToken) {
+                throw new Error('No access token available');
+            }
+
             // Search for existing app folder
-            const response = await window.gapi.client.drive.files.list({
-                q: `name='${this.appFolderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-                fields: 'files(id, name)',
+            const response = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${this.appFolderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false&fields=files(id,name)`, {
+                headers: {
+                    'Authorization': `Bearer ${this.accessToken}`
+                }
             });
 
-            if (response.result.files && response.result.files.length > 0) {
-                this.appFolderId = response.result.files[0].id;
+            if (!response.ok) {
+                throw new Error('Failed to search for app folder');
+            }
+
+            const data = await response.json();
+
+            if (data.files && data.files.length > 0) {
+                this.appFolderId = data.files[0].id;
                 return this.appFolderId!;
             }
 
             // Create new app folder
-            const folderResponse = await window.gapi.client.drive.files.create({
-                resource: {
-                    name: this.appFolderName,
-                    mimeType: 'application/vnd.google-apps.folder',
+            const createResponse = await fetch('https://www.googleapis.com/drive/v3/files', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.accessToken}`,
+                    'Content-Type': 'application/json'
                 },
-                fields: 'id',
+                body: JSON.stringify({
+                    name: this.appFolderName,
+                    mimeType: 'application/vnd.google-apps.folder'
+                })
             });
 
-            this.appFolderId = folderResponse.result.id;
+            if (!createResponse.ok) {
+                throw new Error('Failed to create app folder');
+            }
+
+            const folderData = await createResponse.json();
+            this.appFolderId = folderData.id;
             return this.appFolderId!;
         } catch (error) {
             console.error('Failed to get/create app folder:', error);
@@ -302,13 +340,18 @@ export class GoogleDriveService {
 
         try {
             const folderId = await this.getAppFolder();
-            const response = await window.gapi.client.drive.files.list({
-                q: `'${folderId}' in parents and trashed=false`,
-                fields: 'files(id, name, mimeType, modifiedTime, size)',
-                orderBy: 'modifiedTime desc',
+            const response = await fetch(`https://www.googleapis.com/drive/v3/files?q='${folderId}' in parents and trashed=false&fields=files(id,name,mimeType,modifiedTime,size)&orderBy=modifiedTime desc`, {
+                headers: {
+                    'Authorization': `Bearer ${this.accessToken}`
+                }
             });
 
-            return (response.result.files || []).map((file: any) => ({
+            if (!response.ok) {
+                throw new Error('Failed to list files');
+            }
+
+            const data = await response.json();
+            return (data.files || []).map((file: any) => ({
                 id: file.id,
                 name: file.name,
                 mimeType: file.mimeType,
@@ -334,16 +377,22 @@ export class GoogleDriveService {
         }
 
         try {
-            const response = await window.gapi.client.drive.files.get({
-                fileId: fileId,
-                alt: 'media',
+            const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+                headers: {
+                    'Authorization': `Bearer ${this.accessToken}`
+                }
             });
 
+            if (!response.ok) {
+                throw new Error('Failed to download file');
+            }
+
+            const content = await response.text();
             return {
                 id: fileId,
                 name: '', // Will be filled by caller
                 mimeType: '',
-                content: response.body,
+                content: content,
             };
         } catch (error) {
             console.error('Failed to download file:', error);
@@ -368,48 +417,79 @@ export class GoogleDriveService {
             const folderId = await this.getAppFolder();
 
             // Check if file already exists
-            const existingFiles = await window.gapi.client.drive.files.list({
-                q: `name='${fileName}' and '${folderId}' in parents and trashed=false`,
-                fields: 'files(id)',
+            const existingResponse = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${fileName}' and '${folderId}' in parents and trashed=false&fields=files(id)`, {
+                headers: {
+                    'Authorization': `Bearer ${this.accessToken}`
+                }
             });
 
-            let fileId: string;
-
-            if (existingFiles.result.files && existingFiles.result.files.length > 0) {
-                // Update existing file
-                fileId = existingFiles.result.files[0].id;
-                await window.gapi.client.drive.files.update({
-                    fileId: fileId,
-                    resource: {
-                        name: fileName,
-                    },
-                    media: {
-                        mimeType: 'text/html',
-                        body: htmlContent,
-                    },
-                });
-            } else {
-                // Create new file
-                const createResponse = await window.gapi.client.drive.files.create({
-                    resource: {
-                        name: fileName,
-                        parents: [folderId],
-                    },
-                    media: {
-                        mimeType: 'text/html',
-                        body: htmlContent,
-                    },
-                    fields: 'id',
-                });
-
-                fileId = createResponse.result.id;
+            if (!existingResponse.ok) {
+                throw new Error('Failed to check for existing file');
             }
 
-            return fileId;
+            const existingData = await existingResponse.json();
+
+            if (existingData.files && existingData.files.length > 0) {
+                // Update existing file
+                const fileId = existingData.files[0].id;
+                const updateResponse = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${this.accessToken}`,
+                        'Content-Type': 'text/html'
+                    },
+                    body: htmlContent
+                });
+
+                if (!updateResponse.ok) {
+                    throw new Error('Failed to update file');
+                }
+
+                return fileId;
+            } else {
+                // Create new file
+                const createResponse = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${this.accessToken}`,
+                        'Content-Type': 'multipart/related; boundary=boundary'
+                    },
+                    body: this.createMultipartBody(fileName, folderId, htmlContent, 'text/html')
+                });
+
+                if (!createResponse.ok) {
+                    throw new Error('Failed to create file');
+                }
+
+                const createData = await createResponse.json();
+                return createData.id;
+            }
         } catch (error) {
             console.error('Failed to upload HTML:', error);
             throw error;
         }
+    }
+
+    /**
+     * Create multipart body for file upload
+     */
+    private createMultipartBody(fileName: string, folderId: string, content: string, mimeType: string): string {
+        const metadata = JSON.stringify({
+            name: fileName,
+            parents: [folderId]
+        });
+
+        return [
+            '--boundary',
+            'Content-Type: application/json; charset=UTF-8',
+            '',
+            metadata,
+            '--boundary',
+            `Content-Type: ${mimeType}`,
+            '',
+            content,
+            '--boundary--'
+        ].join('\r\n');
     }
 
     /**
@@ -429,44 +509,53 @@ export class GoogleDriveService {
             const folderId = await this.getAppFolder();
 
             // Check if file already exists
-            const existingFiles = await window.gapi.client.drive.files.list({
-                q: `name='${fileName}' and '${folderId}' in parents and trashed=false`,
-                fields: 'files(id)',
+            const existingResponse = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${fileName}' and '${folderId}' in parents and trashed=false&fields=files(id)`, {
+                headers: {
+                    'Authorization': `Bearer ${this.accessToken}`
+                }
             });
 
-            let fileId: string;
-
-            if (existingFiles.result.files && existingFiles.result.files.length > 0) {
-                // Update existing file
-                fileId = existingFiles.result.files[0].id;
-                await window.gapi.client.drive.files.update({
-                    fileId: fileId,
-                    resource: {
-                        name: fileName,
-                    },
-                    media: {
-                        mimeType: 'text/javascript',
-                        body: jsxContent,
-                    },
-                });
-            } else {
-                // Create new file
-                const createResponse = await window.gapi.client.drive.files.create({
-                    resource: {
-                        name: fileName,
-                        parents: [folderId],
-                    },
-                    media: {
-                        mimeType: 'text/javascript',
-                        body: jsxContent,
-                    },
-                    fields: 'id',
-                });
-
-                fileId = createResponse.result.id;
+            if (!existingResponse.ok) {
+                throw new Error('Failed to check for existing file');
             }
 
-            return fileId;
+            const existingData = await existingResponse.json();
+
+            if (existingData.files && existingData.files.length > 0) {
+                // Update existing file
+                const fileId = existingData.files[0].id;
+                const updateResponse = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${this.accessToken}`,
+                        'Content-Type': 'text/javascript'
+                    },
+                    body: jsxContent
+                });
+
+                if (!updateResponse.ok) {
+                    throw new Error('Failed to update file');
+                }
+
+                return fileId;
+            } else {
+                // Create new file
+                const createResponse = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${this.accessToken}`,
+                        'Content-Type': 'multipart/related; boundary=boundary'
+                    },
+                    body: this.createMultipartBody(fileName, folderId, jsxContent, 'text/javascript')
+                });
+
+                if (!createResponse.ok) {
+                    throw new Error('Failed to create file');
+                }
+
+                const createData = await createResponse.json();
+                return createData.id;
+            }
         } catch (error) {
             console.error('Failed to upload JSX:', error);
             throw error;
