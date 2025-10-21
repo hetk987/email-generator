@@ -8,7 +8,7 @@ interface HeaderProps {
   subtitle?: string;
   className?: string;
 }
-
+ 
 export const Header: React.FC<HeaderProps> = ({
   logoUrl = "https://via.placeholder.com/150x60/3b82f6/ffffff?text=LOGO",
   companyName = "Your Company",
