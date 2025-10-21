@@ -2,8 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import { Copy, Download, Eye, Upload } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useGoogleDrive } from "@/contexts/GoogleDriveContext";
+import toast from "react-hot-toast";
+import { FileNamingDialog } from "./FileNamingDialog";
 
 interface EmailPreviewProps {
   htmlContent: string;
@@ -23,6 +25,9 @@ export function EmailPreview({
     uploadHtml,
     error: driveError,
   } = useGoogleDrive();
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [isNamingDialogOpen, setIsNamingDialogOpen] = useState(false);
 
   const handleCopy = async () => {
     if (!htmlContent.trim()) {
@@ -58,19 +63,32 @@ export function EmailPreview({
     }
   };
 
-  const handleUploadToDrive = async () => {
+  const handleUploadToDrive = useCallback(() => {
     if (!htmlContent.trim()) {
+      toast.error("Please enter some content before uploading");
       return;
     }
+    setIsNamingDialogOpen(true);
+  }, [htmlContent]);
 
-    try {
-      await uploadHtml(htmlContent);
-      // You could add a toast notification here
-    } catch (err) {
-      console.error("Failed to upload to Drive:", err);
-    }
-  };
-
+  const handleConfirmUpload = useCallback(
+    async (filename: string) => {
+      try {
+        setIsUploading(true);
+        setIsNamingDialogOpen(false);
+        await uploadHtml(htmlContent, filename);
+        toast.success(
+          `File "${filename}" uploaded successfully to Google Drive!`
+        );
+      } catch (error) {
+        console.error("Failed to upload to Drive:", error);
+        toast.error(`Failed to upload "${filename}". Please try again.`);
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [htmlContent, uploadHtml]
+  );
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Action buttons */}
@@ -100,12 +118,16 @@ export function EmailPreview({
           size="sm"
           onClick={handleUploadToDrive}
           disabled={
-            !htmlContent.trim() || isLoading || !isSignedIn || driveLoading
+            !htmlContent.trim() ||
+            isLoading ||
+            !isSignedIn ||
+            driveLoading ||
+            isUploading
           }
           className="flex items-center gap-2 bg-[#4285F4] hover:bg-[#357ABD] text-white border-[#4285F4] transition-smooth"
         >
           <Upload className="h-4 w-4" />
-          Upload to Drive
+          {isUploading ? "Uploading..." : "Upload to Drive"}
         </Button>
       </div>
 
@@ -151,6 +173,13 @@ export function EmailPreview({
           </div>
         )}
       </div>
+      <FileNamingDialog
+        isOpen={isNamingDialogOpen}
+        onClose={() => setIsNamingDialogOpen(false)}
+        onConfirm={handleConfirmUpload}
+        fileType="html"
+        isLoading={isUploading}
+      />
     </div>
   );
 }
