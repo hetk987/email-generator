@@ -68,16 +68,11 @@ export class GoogleDriveService {
             throw new Error('Google Drive sign in is only available in the browser');
         }
 
-        try {
-            // Redirect to OAuth initiation endpoint
-            window.location.href = '/api/auth/google';
-
-            // This will redirect, so we won't reach here
-            throw new Error('Redirecting to Google OAuth');
-        } catch (error) {
-            console.error('Sign in failed:', error);
-            throw error;
-        }
+        // Redirect to OAuth initiation endpoint
+        window.location.href = '/api/auth/google';
+        
+        // Return a promise that never resolves since we're redirecting
+        return new Promise(() => {});
     }
 
     /**

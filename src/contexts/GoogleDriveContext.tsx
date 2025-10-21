@@ -63,6 +63,23 @@ export function GoogleDriveProvider({ children }: GoogleDriveProviderProps) {
 
         setIsSignedIn(signedIn);
         setUser(currentUser);
+
+        // Check for OAuth success in URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('auth') === 'success') {
+          // Clear the URL parameter
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.delete('auth');
+          window.history.replaceState({}, '', newUrl.toString());
+          
+          // Refresh the auth status
+          await googleDriveService.initialize();
+          const newSignedIn = googleDriveService.getIsSignedIn();
+          const newUser = googleDriveService.getCurrentUser();
+          
+          setIsSignedIn(newSignedIn);
+          setUser(newUser);
+        }
       } catch (err) {
         console.error("Failed to initialize Google Drive:", err);
         setError(
@@ -86,9 +103,11 @@ export function GoogleDriveProvider({ children }: GoogleDriveProviderProps) {
       setIsLoading(true);
       setError(null);
 
-      const user = await googleDriveService.signIn();
-      setIsSignedIn(true);
-      setUser(user);
+      // This will redirect to OAuth, so we don't expect a return value
+      await googleDriveService.signIn();
+      
+      // The promise will never resolve due to redirect, so we'll handle
+      // the success case when the user returns from OAuth callback
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Sign in failed";
