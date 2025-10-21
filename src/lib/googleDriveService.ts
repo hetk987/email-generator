@@ -34,7 +34,6 @@ export class GoogleDriveService {
     private accessToken: string | null = null;
     private appFolderId: string | null = null;
     private appFolderName = 'Email Generator Templates';
-    private gapiLoaded = false;
 
     private constructor() { }
 
@@ -59,7 +58,6 @@ export class GoogleDriveService {
 
         try {
             await this.loadGoogleScripts();
-            await this.initializeGapi();
             await this.checkExistingAuth();
             this.isInitialized = true;
         } catch (error) {
@@ -69,32 +67,26 @@ export class GoogleDriveService {
     }
 
     /**
-     * Load Google API scripts
+     * Load Google Identity Services script
      */
     private async loadGoogleScripts(): Promise<void> {
         return new Promise((resolve, reject) => {
-            // Check if scripts are already loaded
-            if (window.google && window.gapi) {
+            // Check if script is already loaded
+            if (window.google?.accounts?.oauth2) {
                 resolve();
                 return;
             }
 
-            let loadedCount = 0;
-            const totalScripts = 2;
-
             const onScriptLoad = () => {
-                loadedCount++;
-                if (loadedCount === totalScripts) {
-                    resolve();
-                }
+                resolve();
             };
 
             const onScriptError = (error: any) => {
                 console.error('Script load error:', error);
-                reject(new Error(`Failed to load Google API script: ${error}`));
+                reject(new Error(`Failed to load Google Identity Services script: ${error}`));
             };
 
-            // Load Google Identity Services script
+            // Load only Google Identity Services script
             const identityScript = document.createElement('script');
             identityScript.src = 'https://accounts.google.com/gsi/client';
             identityScript.async = true;
@@ -102,38 +94,6 @@ export class GoogleDriveService {
             identityScript.onload = onScriptLoad;
             identityScript.onerror = onScriptError;
             document.head.appendChild(identityScript);
-
-            // Load Google API script for Drive operations
-            const apiScript = document.createElement('script');
-            apiScript.src = 'https://apis.google.com/js/api.js';
-            apiScript.async = true;
-            apiScript.defer = true;
-            apiScript.onload = onScriptLoad;
-            apiScript.onerror = onScriptError;
-            document.head.appendChild(apiScript);
-        });
-    }
-
-    /**
-     * Initialize Google API client
-     */
-    private async initializeGapi(): Promise<void> {
-        return new Promise((resolve, reject) => {
-            window.gapi.load('client', async () => {
-                try {
-                    await window.gapi.client.init({
-                        apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
-                        clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-                        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-                        scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly'
-                    });
-                    this.gapiLoaded = true;
-                    resolve();
-                } catch (error) {
-                    console.error('GAPI client init error:', error);
-                    reject(error);
-                }
-            });
         });
     }
 
