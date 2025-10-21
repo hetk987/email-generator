@@ -282,10 +282,7 @@ To enable Google Drive integration for team collaboration, follow these steps:
 4. Add authorized JavaScript origins:
    - `http://localhost:3000` (for development)
    - Your production domain (e.g., `https://yourdomain.com`)
-5. Add authorized redirect URIs:
-   - `http://localhost:3000/api/auth/google/callback` (for development)
-   - `https://yourdomain.com/api/auth/google/callback` (for production)
-6. Copy the **Client ID** and **Client Secret**
+5. Copy the **Client ID**
 
 ### 5. Set Up Environment Variables
 
@@ -294,16 +291,12 @@ To enable Google Drive integration for team collaboration, follow these steps:
    ```bash
    # Google Drive API Configuration
    NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_client_id_here
-   GOOGLE_CLIENT_SECRET=your_client_secret_here
-   GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/google/callback
-   NEXT_PUBLIC_APP_URL=http://localhost:3000
+   NEXT_PUBLIC_GOOGLE_API_KEY=your_api_key_here
    ```
 
 2. Replace the values with your Google Cloud Console credentials:
    - `NEXT_PUBLIC_GOOGLE_CLIENT_ID`: Client ID from step 4
-   - `GOOGLE_CLIENT_SECRET`: Client Secret from step 4
-   - `GOOGLE_REDIRECT_URI`: Should match what you configured in Google Cloud Console
-   - `NEXT_PUBLIC_APP_URL`: Your app URL (update for production)
+   - `NEXT_PUBLIC_GOOGLE_API_KEY`: API Key from Google Cloud Console (optional, for better performance)
 
 ### 6. File Types Supported
 
