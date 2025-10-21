@@ -15,6 +15,8 @@ A powerful, modern email template generator built with Next.js, React Email, and
 - 🎯 **JSX Syntax**: Write emails in familiar React JSX syntax
 - 🎨 **Modern UI**: Built with Tailwind CSS and shadcn/ui components
 - 📱 **Responsive Design**: Optimized for all screen sizes
+- ☁️ **Google Drive Integration**: Download templates from and upload results to Google Drive
+- 👥 **Team Collaboration**: Share templates through Google Workspace shared drives
 
 ## 🚀 Quick Start
 
@@ -38,13 +40,23 @@ A powerful, modern email template generator built with Next.js, React Email, and
    npm install
    ```
 
-3. **Run the development server**:
+3. **Set up Google Drive integration** (optional but recommended for team collaboration):
+
+   Create a `.env.local` file in the root directory:
+
+   ```bash
+   cp .env.example .env.local
+   ```
+
+   Then follow the [Google Cloud Console Setup](#google-cloud-console-setup) instructions below.
+
+4. **Run the development server**:
 
    ```bash
    npm run dev
    ```
 
-4. **Open your browser** and navigate to `http://localhost:3000`
+5. **Open your browser** and navigate to `http://localhost:3000`
 
 ## 📖 Usage Guide
 
@@ -208,7 +220,13 @@ src/
 │       ├── button.tsx
 │       ├── card.tsx
 │       └── separator.tsx
+├── contexts/
+│   ├── ApiContext.tsx      # API configuration context
+│   ├── GoogleDriveContext.tsx # Google Drive integration context
+│   └── ThemeContext.tsx    # Theme management context
 └── lib/
+    ├── apiService.ts       # API service utilities
+    ├── googleDriveService.ts # Google Drive API service
     └── utils.ts            # Utility functions
 ```
 
@@ -224,6 +242,76 @@ src/
 - **`generateHtml()`** - Transforms JSX code to HTML using Babel and React Email
 - **`handleCodeChange()`** - Updates editor state when code changes
 - **Monaco `beforeMount`** - Configures TypeScript definitions for autocompletion
+
+## ☁️ Google Cloud Console Setup
+
+To enable Google Drive integration for team collaboration, follow these steps:
+
+### 1. Create Google Cloud Project
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Note your project ID
+
+### 2. Enable Google Drive API
+
+1. In the Google Cloud Console, navigate to **APIs & Services** > **Library**
+2. Search for "Google Drive API"
+3. Click on it and press **Enable**
+
+### 3. Configure OAuth Consent Screen
+
+1. Go to **APIs & Services** > **OAuth consent screen**
+2. Choose **Internal** (for Google Workspace organizations) or **External**
+3. Fill in the required fields:
+   - App name: "Email Generator"
+   - User support email: your email
+   - Developer contact: your email
+4. Add scopes:
+   - `https://www.googleapis.com/auth/drive.file`
+   - `https://www.googleapis.com/auth/drive.readonly`
+5. Add test users (if using External) or skip (if using Internal)
+
+### 4. Create OAuth 2.0 Credentials
+
+1. Go to **APIs & Services** > **Credentials**
+2. Click **Create Credentials** > **OAuth 2.0 Client ID**
+3. Choose **Web application**
+4. Add authorized JavaScript origins:
+   - `http://localhost:3000` (for development)
+   - Your production domain (e.g., `https://yourdomain.com`)
+5. Copy the **Client ID**
+
+### 5. Set Up Environment Variables
+
+1. Create a `.env.local` file in your project root:
+
+   ```bash
+   # Google Drive API Configuration
+   NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_client_id_here
+   NEXT_PUBLIC_DRIVE_FOLDER_ID=your_folder_id_here
+   ```
+
+2. Replace `your_client_id_here` with the Client ID from step 4
+
+3. Create a folder in Google Drive for HTML uploads and get its ID:
+   - Create a folder in Google Drive
+   - Open the folder and copy the ID from the URL
+   - Replace `your_folder_id_here` with this folder ID
+
+### 6. Share Drive Folder (Team Setup)
+
+1. Right-click the folder in Google Drive
+2. Click **Share**
+3. Add your team members' email addresses
+4. Give them **Editor** or **Viewer** permissions as needed
+
+### 7. File Types Supported
+
+The Google Drive integration supports:
+
+- **Download**: `.jsx`, `.tsx`, `.txt` files
+- **Upload**: HTML files (generated emails) and JSX files (source code)
 
 ## 🛠️ Development
 

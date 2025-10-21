@@ -1,6 +1,10 @@
 import type React from "react";
 import { Mail, Users, ShoppingBag, Calendar, Code } from "lucide-react";
 
+// Type declaration for API data used in templates
+declare const API: any;
+declare const apiData: any;
+
 export interface Template {
   id: string;
   name: string;

@@ -52,7 +52,7 @@ export function ApiConfigurationModal({
   } = useApi();
 
   // Debug logging
-  console.log("🔧 ApiConfigurationModal - endpoints:", endpoints);
+  // console.log("🔧 ApiConfigurationModal - endpoints:", endpoints);
 
   const [isOpen, setIsOpen] = useState(false);
   const [editingEndpoint, setEditingEndpoint] = useState<ApiEndpoint | null>(

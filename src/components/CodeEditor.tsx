@@ -3,6 +3,9 @@
 import { Editor } from "@monaco-editor/react";
 import { useCallback, useRef, useContext, useState, useEffect } from "react";
 import { ThemeContext } from "@/contexts/ThemeContext";
+import { useGoogleDrive } from "@/contexts/GoogleDriveContext";
+import { Button } from "@/components/ui/button";
+import { Download, Upload, LogIn, LogOut, User } from "lucide-react";
 
 /**
  * Props for the CodeEditor component
@@ -36,6 +39,16 @@ export function CodeEditor({
   const editorRef = useRef<any>(null);
   const [mounted, setMounted] = useState(false);
   const themeContext = useContext(ThemeContext);
+  const {
+    isSignedIn,
+    user,
+    isLoading: driveLoading,
+    signIn,
+    signOut,
+    downloadFile,
+    uploadJsx,
+    error: driveError,
+  } = useGoogleDrive();
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -71,8 +84,90 @@ export function CodeEditor({
     [value]
   );
 
+  /**
+   * Handle downloading file from Google Drive
+   */
+  const handleDownloadFromDrive = useCallback(async () => {
+    try {
+      const file = await downloadFile();
+      if (file.content) {
+        onChange(file.content);
+      }
+    } catch (error) {
+      console.error("Failed to download from Drive:", error);
+    }
+  }, [downloadFile, onChange]);
+
+  /**
+   * Handle uploading JSX to Google Drive
+   */
+  const handleUploadToDrive = useCallback(async () => {
+    try {
+      await uploadJsx(value);
+      // You could add a toast notification here
+    } catch (error) {
+      console.error("Failed to upload to Drive:", error);
+    }
+  }, [uploadJsx, value]);
+
   return (
     <div className="h-full w-full ">
+      <div className="flex flex-row items-center justify-between gap-2 p-3 border-b border-border bg-card flex-shrink-0">
+        <div className="flex items-center gap-2">
+          {!isSignedIn ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={signIn}
+              disabled={driveLoading}
+              className="flex items-center gap-2 bg-[#4285F4] hover:bg-[#357ABD] text-white border-[#4285F4] transition-smooth"
+            >
+              <LogIn className="h-4 w-4" />
+              Sign in to Drive
+            </Button>
+          ) : (
+            <>
+              <div className="flex items-center gap-2 px-2 py-1 bg-green-50 border border-green-200 rounded text-sm text-green-700">
+                <User className="h-4 w-4" />
+                {user?.name || user?.email}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={signOut}
+                disabled={driveLoading}
+                className="flex items-center gap-2 text-gray-600 hover:bg-gray-50 transition-smooth"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign out
+              </Button>
+            </>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadFromDrive}
+            disabled={!isSignedIn || driveLoading || !value.trim()}
+            className="flex items-center gap-2 bg-[#4285F4] hover:bg-[#357ABD] text-white border-[#4285F4] transition-smooth"
+          >
+            <Download className="h-4 w-4" />
+            Download from Drive
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleUploadToDrive}
+            disabled={!isSignedIn || driveLoading || !value.trim()}
+            className="flex items-center gap-2 bg-[#4285F4] hover:bg-[#357ABD] text-white border-[#4285F4] transition-smooth"
+          >
+            <Upload className="h-4 w-4" />
+            Upload to Drive
+          </Button>
+        </div>
+      </div>
       <Editor
         height={height}
         defaultLanguage="javascript"

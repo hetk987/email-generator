@@ -1,8 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Copy, Download, Eye } from "lucide-react";
+import { Copy, Download, Eye, Upload } from "lucide-react";
 import { useState } from "react";
+import { useGoogleDrive } from "@/contexts/GoogleDriveContext";
 
 interface EmailPreviewProps {
   htmlContent: string;
@@ -16,6 +17,12 @@ export function EmailPreview({
   isLoading = false,
 }: EmailPreviewProps) {
   const [copied, setCopied] = useState(false);
+  const {
+    isSignedIn,
+    isLoading: driveLoading,
+    uploadHtml,
+    error: driveError,
+  } = useGoogleDrive();
 
   const handleCopy = async () => {
     if (!htmlContent.trim()) {
@@ -51,6 +58,19 @@ export function EmailPreview({
     }
   };
 
+  const handleUploadToDrive = async () => {
+    if (!htmlContent.trim()) {
+      return;
+    }
+
+    try {
+      await uploadHtml(htmlContent);
+      // You could add a toast notification here
+    } catch (err) {
+      console.error("Failed to upload to Drive:", err);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Action buttons */}
@@ -74,6 +94,18 @@ export function EmailPreview({
         >
           <Download className="h-4 w-4" />
           Download
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleUploadToDrive}
+          disabled={
+            !htmlContent.trim() || isLoading || !isSignedIn || driveLoading
+          }
+          className="flex items-center gap-2 bg-[#4285F4] hover:bg-[#357ABD] text-white border-[#4285F4] transition-smooth"
+        >
+          <Upload className="h-4 w-4" />
+          Upload to Drive
         </Button>
       </div>
 
