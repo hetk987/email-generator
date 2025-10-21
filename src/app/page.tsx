@@ -5,13 +5,14 @@ import { CodeEditor } from "@/components/CodeEditor";
 import { EmailPreview } from "@/components/EmailPreview";
 import { ResizablePanels } from "@/components/ResizablePanels";
 import { Button } from "@/components/ui/button";
-import { Mail, Code, Eye, Palette, Settings } from "lucide-react";
+import { Mail, Code, Eye, Palette, Settings, HelpCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TemplateGallery } from "@/components/TemplateGallery";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ApiConfigurationModal } from "@/components/ApiConfigurationModal";
 import { useApi, getApiDataForTemplate } from "@/contexts/ApiContext";
 import { DEFAULT_TEMPLATE } from "@/templates/default";
+import { Documentation } from "@/components/Documentation";
 
 /**
  * Email Generator Application
@@ -186,7 +187,7 @@ export default function EmailGenerator() {
   return (
     <div className="h-screen bg-background flex flex-col">
       {/* Application Header */}
-      <header className="border-b bg-card shadow-sm flex-shrink-0">
+      {/* <header className="border-b bg-card shadow-sm flex-shrink-0">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -199,7 +200,43 @@ export default function EmailGenerator() {
                 </h1>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+          </div>
+        </div>
+      </header> */}
+
+      {/* Main Editor and Preview Area */}
+      <main className="flex-1 min-h-0">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="h-full flex flex-col"
+        >
+          <div className="flex items-center justify-between">
+            <TabsList className="justify-center space-x-1 w-fit bg-card border border-border rounded-xl p-1 shadow-sm mb-4 mx-4 mt-4">
+              <TabsTrigger
+                value="editor"
+                className="data-[state=active]:bg-brand-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-brand transition-smooth"
+              >
+                <Code className="w-4 h-4 mr-2" />
+                Editor
+              </TabsTrigger>
+              <TabsTrigger
+                value="templates"
+                className="data-[state=active]:bg-brand-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-brand transition-smooth"
+              >
+                <Palette className="w-4 h-4 mr-2" />
+                Templates
+              </TabsTrigger>
+              <TabsTrigger
+                value="documentation"
+                className="data-[state=active]:bg-brand-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-brand transition-smooth"
+              >
+                <HelpCircle className="w-4 h-4 mr-2" />
+                Documentation
+              </TabsTrigger>
+            </TabsList>
+
+            <div className="flex items-center gap-4 pr-4">
               {detectedFunction && (
                 <div className="px-3 py-2 bg-brand-light/30 rounded-lg border border-brand-accent/20">
                   <div className="text-sm text-brand-primary font-medium">
@@ -226,32 +263,6 @@ export default function EmailGenerator() {
               </Button>
             </div>
           </div>
-        </div>
-      </header>
-
-      {/* Main Editor and Preview Area */}
-      <main className="flex-1 min-h-0">
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="h-full flex flex-col"
-        >
-          <TabsList className="justify-start w-fit bg-card border border-border rounded-xl p-1 shadow-sm mb-4 mx-4 mt-4 flex-shrink-0">
-            <TabsTrigger
-              value="editor"
-              className="data-[state=active]:bg-brand-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-brand transition-smooth"
-            >
-              <Code className="w-4 h-4 mr-2" />
-              Editor
-            </TabsTrigger>
-            <TabsTrigger
-              value="templates"
-              className="data-[state=active]:bg-brand-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-brand transition-smooth"
-            >
-              <Palette className="w-4 h-4 mr-2" />
-              Templates
-            </TabsTrigger>
-          </TabsList>
 
           <TabsContent value="editor" className="flex-1 min-h-0 mt-0 px-4 pb-4">
             <ResizablePanels
@@ -281,6 +292,12 @@ export default function EmailGenerator() {
             className="flex-1 min-h-0 mt-0 px-4 pb-4"
           >
             <TemplateGallery onTemplateSelect={handleTemplateSelect} />
+          </TabsContent>
+          <TabsContent
+            value="documentation"
+            className="flex-1 min-h-0 mt-0 px-4 pb-4"
+          >
+            <Documentation />
           </TabsContent>
         </Tabs>
       </main>
