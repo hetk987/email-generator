@@ -34,6 +34,7 @@ export class GoogleDriveService {
     private accessToken: string | null = null;
     private appFolderId: string | null = process.env.NEXT_PUBLIC_DRIVE_FOLDER_ID || null;
     private appFolderName: string | null = process.env.NEXT_PUBLIC_DRIVE_FOLDER_NAME || null;
+    private isSharedDrive: boolean = false;
 
     private constructor() { }
 
@@ -230,6 +231,14 @@ export class GoogleDriveService {
     }
 
     /**
+     * Set the shared drive folder ID directly
+     */
+    public setSharedDriveFolder(folderId: string): void {
+        this.appFolderId = folderId;
+        this.isSharedDrive = true;
+    }
+
+    /**
      * Get or create app-specific folder
      */
     private async getAppFolder(): Promise<string> {
@@ -242,8 +251,21 @@ export class GoogleDriveService {
                 throw new Error('No access token available');
             }
 
-            // Search for existing app folder
-            const response = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${this.appFolderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false&fields=files(id,name)`, {
+            // Check if we're working with a shared drive folder ID
+            if (this.appFolderId && this.appFolderId.startsWith('1Rr9zqZ9UpF27egCpa8Cv_cEg5dXiNTIm')) {
+                this.isSharedDrive = true;
+                return this.appFolderId;
+            }
+
+            // Search for existing app folder (include shared drives)
+            const searchParams = new URLSearchParams({
+                q: `name='${this.appFolderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+                fields: 'files(id,name)',
+                supportsAllDrives: 'true',
+                includeItemsFromAllDrives: 'true'
+            });
+
+            const response = await fetch(`https://www.googleapis.com/drive/v3/files?${searchParams}`, {
                 headers: {
                     'Authorization': `Bearer ${this.accessToken}`
                 }
@@ -260,7 +282,13 @@ export class GoogleDriveService {
                 return this.appFolderId!;
             }
 
-            // Create new app folder
+            // For shared drives, we cannot create folders programmatically without proper permissions
+            // Instead, we'll use the provided folder ID directly
+            if (this.appFolderId) {
+                return this.appFolderId;
+            }
+
+            // Create new app folder (only for personal drives)
             const createResponse = await fetch('https://www.googleapis.com/drive/v3/files', {
                 method: 'POST',
                 headers: {
@@ -300,7 +328,15 @@ export class GoogleDriveService {
 
         try {
             const folderId = await this.getAppFolder();
-            const response = await fetch(`https://www.googleapis.com/drive/v3/files?q='${folderId}' in parents and trashed=false&fields=files(id,name,mimeType,modifiedTime,size)&orderBy=modifiedTime desc`, {
+            const searchParams = new URLSearchParams({
+                q: `'${folderId}' in parents and trashed=false`,
+                fields: 'files(id,name,mimeType,modifiedTime,size)',
+                orderBy: 'modifiedTime desc',
+                supportsAllDrives: 'true',
+                includeItemsFromAllDrives: 'true'
+            });
+
+            const response = await fetch(`https://www.googleapis.com/drive/v3/files?${searchParams}`, {
                 headers: {
                     'Authorization': `Bearer ${this.accessToken}`
                 }
@@ -376,8 +412,15 @@ export class GoogleDriveService {
             const fileName = filename || `email-template-${Date.now()}.html`;
             const folderId = await this.getAppFolder();
 
-            // Check if file already exists
-            const existingResponse = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${fileName}' and '${folderId}' in parents and trashed=false&fields=files(id)`, {
+            // Check if file already exists (include shared drives)
+            const searchParams = new URLSearchParams({
+                q: `name='${fileName}' and '${folderId}' in parents and trashed=false`,
+                fields: 'files(id)',
+                supportsAllDrives: 'true',
+                includeItemsFromAllDrives: 'true'
+            });
+
+            const existingResponse = await fetch(`https://www.googleapis.com/drive/v3/files?${searchParams}`, {
                 headers: {
                     'Authorization': `Bearer ${this.accessToken}`
                 }
@@ -392,7 +435,11 @@ export class GoogleDriveService {
             if (existingData.files && existingData.files.length > 0) {
                 // Update existing file
                 const fileId = existingData.files[0].id;
-                const updateResponse = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+                const updateUrl = this.isSharedDrive
+                    ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media&supportsAllDrives=true`
+                    : `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`;
+
+                const updateResponse = await fetch(updateUrl, {
                     method: 'PATCH',
                     headers: {
                         'Authorization': `Bearer ${this.accessToken}`,
@@ -408,7 +455,11 @@ export class GoogleDriveService {
                 return fileId;
             } else {
                 // Create new file
-                const createResponse = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                const createUrl = this.isSharedDrive
+                    ? 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true'
+                    : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+
+                const createResponse = await fetch(createUrl, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${this.accessToken}`,
@@ -468,8 +519,15 @@ export class GoogleDriveService {
             const fileName = filename || `email-template-${Date.now()}.jsx`;
             const folderId = await this.getAppFolder();
 
-            // Check if file already exists
-            const existingResponse = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${fileName}' and '${folderId}' in parents and trashed=false&fields=files(id)`, {
+            // Check if file already exists (include shared drives)
+            const searchParams = new URLSearchParams({
+                q: `name='${fileName}' and '${folderId}' in parents and trashed=false`,
+                fields: 'files(id)',
+                supportsAllDrives: 'true',
+                includeItemsFromAllDrives: 'true'
+            });
+
+            const existingResponse = await fetch(`https://www.googleapis.com/drive/v3/files?${searchParams}`, {
                 headers: {
                     'Authorization': `Bearer ${this.accessToken}`
                 }
@@ -484,7 +542,11 @@ export class GoogleDriveService {
             if (existingData.files && existingData.files.length > 0) {
                 // Update existing file
                 const fileId = existingData.files[0].id;
-                const updateResponse = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+                const updateUrl = this.isSharedDrive
+                    ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media&supportsAllDrives=true`
+                    : `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`;
+
+                const updateResponse = await fetch(updateUrl, {
                     method: 'PATCH',
                     headers: {
                         'Authorization': `Bearer ${this.accessToken}`,
@@ -500,7 +562,11 @@ export class GoogleDriveService {
                 return fileId;
             } else {
                 // Create new file
-                const createResponse = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                const createUrl = this.isSharedDrive
+                    ? 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true'
+                    : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+
+                const createResponse = await fetch(createUrl, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${this.accessToken}`,
