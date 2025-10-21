@@ -5,10 +5,12 @@ import { CodeEditor } from "@/components/CodeEditor";
 import { EmailPreview } from "@/components/EmailPreview";
 import { ResizablePanels } from "@/components/ResizablePanels";
 import { Button } from "@/components/ui/button";
-import { Mail, Code, Eye, Palette } from "lucide-react";
+import { Mail, Code, Eye, Palette, Settings } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TemplateGallery } from "@/components/TemplateGallery";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ApiConfigurationModal } from "@/components/ApiConfigurationModal";
+import { useApi, getApiDataForTemplate } from "@/contexts/ApiContext";
 import { DEFAULT_TEMPLATE } from "@/templates/default";
 
 /**
@@ -40,17 +42,21 @@ export default function EmailGenerator() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [detectedFunction, setDetectedFunction] = useState<string>("");
 
+  // API context
+  const { fetchAllApis, apiData, isLoading: isApiLoading } = useApi();
+
   /**
    * Generates HTML from the user's React Email code
    *
    * Process:
    * 1. Validates input code
-   * 2. Imports React Email components dynamically
-   * 3. Imports custom components and assets
-   * 4. Transforms JSX to JavaScript using Babel
-   * 5. Executes the transformed code in a sandboxed environment
-   * 6. Renders the React component to HTML using React Email's render function
-   * 7. Updates the preview with the generated HTML
+   * 2. Fetches API data if endpoints are configured
+   * 3. Imports React Email components dynamically
+   * 4. Imports custom components and assets
+   * 5. Transforms JSX to JavaScript using Babel
+   * 6. Executes the transformed code in a sandboxed environment with API data
+   * 7. Renders the React component to HTML using React Email's render function
+   * 8. Updates the preview with the generated HTML
    */
   const generateHtml = async () => {
     // Input validation
@@ -64,7 +70,15 @@ export default function EmailGenerator() {
     setDetectedFunction("");
 
     try {
-      // Step 1: Import React Email components dynamically
+      // Step 1: Fetch API data if endpoints are configured
+      console.log("🔄 Starting email generation...");
+      await fetchAllApis();
+
+      // Prepare API data for template usage
+      const apiDataForTemplate = getApiDataForTemplate(apiData);
+      console.log("📊 API Data for template:", apiDataForTemplate);
+
+      // Step 2: Import React Email components dynamically
       const {
         Html,
         Head,
@@ -78,13 +92,13 @@ export default function EmailGenerator() {
         Tailwind,
       } = await import("@react-email/components");
 
-      // Step 2: Import custom components and assets
+      // Step 3: Import custom components and assets
       const { CustomButton, Card, Header, Footer } = await import(
         "@/components/email"
       );
       const { logoUrl, heroBgUrl } = await import("@/assets");
 
-      // Step 3: Transform JSX to JavaScript using Babel
+      // Step 4: Transform JSX to JavaScript using Babel
       const { transform } = await import("@babel/standalone");
 
       let transformedCode;
@@ -101,7 +115,7 @@ export default function EmailGenerator() {
         transformedCode = code;
       }
 
-      // Step 4: Create sandboxed execution environment
+      // Step 5: Create sandboxed execution environment with API data
       // The Tailwind component automatically handles className → inline styles conversion
       const executeTemplate = new Function(
         "React",
@@ -121,6 +135,7 @@ export default function EmailGenerator() {
         "Footer",
         "logoUrl",
         "heroBgUrl",
+        "API",
         "transformedCode",
         `
         ${transformedCode}
@@ -151,7 +166,7 @@ export default function EmailGenerator() {
         `
       );
 
-      // Step 5: Execute the template code with React Email components and custom components
+      // Step 6: Execute the template code with React Email components, custom components, and API data
       const emailElement = executeTemplate(
         React,
         Html,
@@ -170,15 +185,16 @@ export default function EmailGenerator() {
         Footer,
         logoUrl,
         heroBgUrl,
+        apiDataForTemplate,
         transformedCode
       );
 
-      // Step 6: Capture the detected function name
+      // Step 7: Capture the detected function name
       const detectedFunctionName =
         (window as any).detectedFunctionName || "Unknown";
       setDetectedFunction(detectedFunctionName);
 
-      // Step 7: Render React component to email-compatible HTML
+      // Step 8: Render React component to email-compatible HTML
       const { render } = await import("@react-email/render");
       const htmlResult = await render(emailElement);
       setHtmlContent(htmlResult);
@@ -233,14 +249,19 @@ export default function EmailGenerator() {
                   </div>
                 </div>
               )}
+              <ApiConfigurationModal />
               <ThemeToggle />
               <Button
                 onClick={generateHtml}
-                disabled={isGenerating}
+                disabled={isGenerating || isApiLoading}
                 className="flex items-center gap-2 bg-brand-primary hover:bg-brand-primary/90 text-white shadow-brand transition-smooth hover-lift"
               >
                 <Eye className="h-4 w-4" />
-                {isGenerating ? "Generating..." : "Generate Preview"}
+                {isGenerating
+                  ? "Generating..."
+                  : isApiLoading
+                    ? "Fetching APIs..."
+                    : "Generate Preview"}
               </Button>
             </div>
           </div>
