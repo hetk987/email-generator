@@ -268,8 +268,10 @@ To enable Google Drive integration for team collaboration, follow these steps:
    - User support email: your email
    - Developer contact: your email
 4. Add scopes:
-   - `https://www.googleapis.com/auth/drive.file`
-   - `https://www.googleapis.com/auth/drive.readonly`
+   - `https://www.googleapis.com/auth/drive.file` (Create and manage files)
+   - `https://www.googleapis.com/auth/drive.readonly` (Read files)
+   - `https://www.googleapis.com/auth/userinfo.email` (User email)
+   - `https://www.googleapis.com/auth/userinfo.profile` (User profile)
 5. Add test users (if using External) or skip (if using Internal)
 
 ### 4. Create OAuth 2.0 Credentials
@@ -280,7 +282,10 @@ To enable Google Drive integration for team collaboration, follow these steps:
 4. Add authorized JavaScript origins:
    - `http://localhost:3000` (for development)
    - Your production domain (e.g., `https://yourdomain.com`)
-5. Copy the **Client ID**
+5. Add authorized redirect URIs:
+   - `http://localhost:3000/api/auth/google/callback` (for development)
+   - `https://yourdomain.com/api/auth/google/callback` (for production)
+6. Copy the **Client ID** and **Client Secret**
 
 ### 5. Set Up Environment Variables
 
@@ -289,29 +294,25 @@ To enable Google Drive integration for team collaboration, follow these steps:
    ```bash
    # Google Drive API Configuration
    NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_client_id_here
-   NEXT_PUBLIC_DRIVE_FOLDER_ID=your_folder_id_here
+   GOOGLE_CLIENT_SECRET=your_client_secret_here
+   GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/google/callback
+   NEXT_PUBLIC_APP_URL=http://localhost:3000
    ```
 
-2. Replace `your_client_id_here` with the Client ID from step 4
+2. Replace the values with your Google Cloud Console credentials:
+   - `NEXT_PUBLIC_GOOGLE_CLIENT_ID`: Client ID from step 4
+   - `GOOGLE_CLIENT_SECRET`: Client Secret from step 4
+   - `GOOGLE_REDIRECT_URI`: Should match what you configured in Google Cloud Console
+   - `NEXT_PUBLIC_APP_URL`: Your app URL (update for production)
 
-3. Create a folder in Google Drive for HTML uploads and get its ID:
-   - Create a folder in Google Drive
-   - Open the folder and copy the ID from the URL
-   - Replace `your_folder_id_here` with this folder ID
-
-### 6. Share Drive Folder (Team Setup)
-
-1. Right-click the folder in Google Drive
-2. Click **Share**
-3. Add your team members' email addresses
-4. Give them **Editor** or **Viewer** permissions as needed
-
-### 7. File Types Supported
+### 6. File Types Supported
 
 The Google Drive integration supports:
 
-- **Download**: `.jsx`, `.tsx`, `.txt` files
+- **Download**: `.jsx`, `.tsx`, `.html`, `.txt` files from the "Email Generator Templates" folder
 - **Upload**: HTML files (generated emails) and JSX files (source code)
+- **File Management**: All files are stored in a dedicated app folder for easy organization
+- **File Picker**: Simple dropdown interface to select and load files into the editor
 
 ## 🛠️ Development
 

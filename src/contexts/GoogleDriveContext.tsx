@@ -20,12 +20,12 @@ interface GoogleDriveContextType {
   isLoading: boolean;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
-  downloadFile: () => Promise<GoogleDriveFile>;
+  downloadFile: (fileId: string) => Promise<GoogleDriveFile>;
+  listFiles: () => Promise<GoogleDriveFile[]>;
   uploadHtml: (htmlContent: string, filename?: string) => Promise<string>;
   uploadJsx: (jsxContent: string, filename?: string) => Promise<string>;
   error: string | null;
   clearError: () => void;
-  renderSignInButton: (elementId: string) => void;
 }
 
 const GoogleDriveContext = createContext<GoogleDriveContextType | undefined>(
@@ -123,9 +123,37 @@ export function GoogleDriveProvider({ children }: GoogleDriveProviderProps) {
   }, []);
 
   /**
-   * Download file from Google Drive
+   * Download file from Google Drive by file ID
    */
-  const downloadFile = useCallback(async (): Promise<GoogleDriveFile> => {
+  const downloadFile = useCallback(
+    async (fileId: string): Promise<GoogleDriveFile> => {
+      if (typeof window === "undefined") {
+        throw new Error("Google Drive is only available in the browser");
+      }
+
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const file = await googleDriveService.downloadFile(fileId);
+        return file;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Download failed";
+        setError(errorMessage);
+        console.error("Download error:", err);
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  /**
+   * List files from Google Drive
+   */
+  const listFiles = useCallback(async (): Promise<GoogleDriveFile[]> => {
     if (typeof window === "undefined") {
       throw new Error("Google Drive is only available in the browser");
     }
@@ -134,25 +162,13 @@ export function GoogleDriveProvider({ children }: GoogleDriveProviderProps) {
       setIsLoading(true);
       setError(null);
 
-      const file = await googleDriveService.pickFileFromDrive();
-
-      // Validate file type
-      const allowedExtensions = [".jsx", ".tsx", ".txt"];
-      const fileName = file.name.toLowerCase();
-      const hasValidExtension = allowedExtensions.some((ext) =>
-        fileName.endsWith(ext)
-      );
-
-      if (!hasValidExtension) {
-        throw new Error("Please select a .jsx, .tsx, or .txt file");
-      }
-
-      return file;
+      const files = await googleDriveService.listFiles();
+      return files;
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Download failed";
+        err instanceof Error ? err.message : "Failed to list files";
       setError(errorMessage);
-      console.error("Download error:", err);
+      console.error("List files error:", err);
       throw err;
     } finally {
       setIsLoading(false);
@@ -228,36 +244,6 @@ export function GoogleDriveProvider({ children }: GoogleDriveProviderProps) {
     setError(null);
   }, []);
 
-  /**
-   * Render Google Sign-In button
-   */
-  const renderSignInButton = useCallback((elementId: string) => {
-    if (typeof window === "undefined") return;
-
-    try {
-      if (
-        window.google &&
-        window.google.accounts &&
-        window.google.accounts.id
-      ) {
-        window.google.accounts.id.renderButton(
-          document.getElementById(elementId),
-          {
-            theme: "outline",
-            size: "large",
-            type: "standard",
-            text: "signin_with",
-            shape: "rectangular",
-            logo_alignment: "left",
-            width: 250,
-          }
-        );
-      }
-    } catch (err) {
-      console.error("Error rendering sign-in button:", err);
-    }
-  }, []);
-
   const value: GoogleDriveContextType = {
     isSignedIn,
     user,
@@ -265,11 +251,11 @@ export function GoogleDriveProvider({ children }: GoogleDriveProviderProps) {
     signIn,
     signOut,
     downloadFile,
+    listFiles,
     uploadHtml,
     uploadJsx,
     error,
     clearError,
-    renderSignInButton,
   };
 
   return (

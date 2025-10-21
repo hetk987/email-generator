@@ -5,7 +5,15 @@ import { useCallback, useRef, useContext, useState, useEffect } from "react";
 import { ThemeContext } from "@/contexts/ThemeContext";
 import { useGoogleDrive } from "@/contexts/GoogleDriveContext";
 import { Button } from "@/components/ui/button";
-import { Download, Upload, LogIn, LogOut, User } from "lucide-react";
+import {
+  Download,
+  Upload,
+  LogIn,
+  LogOut,
+  User,
+  FileText,
+  ChevronDown,
+} from "lucide-react";
 
 /**
  * Props for the CodeEditor component
@@ -38,6 +46,8 @@ export function CodeEditor({
 }: CodeEditorProps) {
   const editorRef = useRef<any>(null);
   const [mounted, setMounted] = useState(false);
+  const [files, setFiles] = useState<any[]>([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const themeContext = useContext(ThemeContext);
   const {
     isSignedIn,
@@ -46,6 +56,7 @@ export function CodeEditor({
     signIn,
     signOut,
     downloadFile,
+    listFiles,
     uploadJsx,
     error: driveError,
   } = useGoogleDrive();
@@ -54,6 +65,40 @@ export function CodeEditor({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Load files when user signs in
+  useEffect(() => {
+    if (isSignedIn && mounted) {
+      loadFiles();
+    }
+  }, [isSignedIn, mounted]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isDropdownOpen) {
+        const target = event.target as Element;
+        if (!target.closest(".file-dropdown-container")) {
+          setIsDropdownOpen(false);
+        }
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isDropdownOpen]);
+
+  /**
+   * Load files from Google Drive
+   */
+  const loadFiles = useCallback(async () => {
+    try {
+      const driveFiles = await listFiles();
+      setFiles(driveFiles);
+    } catch (error) {
+      console.error("Failed to load files:", error);
+    }
+  }, [listFiles]);
 
   // Default to light theme if context is not available
   const theme = themeContext?.theme || "light";
@@ -85,18 +130,22 @@ export function CodeEditor({
   );
 
   /**
-   * Handle downloading file from Google Drive
+   * Handle file selection from dropdown
    */
-  const handleDownloadFromDrive = useCallback(async () => {
-    try {
-      const file = await downloadFile();
-      if (file.content) {
-        onChange(file.content);
+  const handleFileSelect = useCallback(
+    async (fileId: string) => {
+      try {
+        const file = await downloadFile(fileId);
+        if (file.content) {
+          onChange(file.content);
+        }
+        setIsDropdownOpen(false);
+      } catch (error) {
+        console.error("Failed to load file:", error);
       }
-    } catch (error) {
-      console.error("Failed to download from Drive:", error);
-    }
-  }, [downloadFile, onChange]);
+    },
+    [downloadFile, onChange]
+  );
 
   /**
    * Handle uploading JSX to Google Drive
@@ -146,16 +195,42 @@ export function CodeEditor({
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDownloadFromDrive}
-            disabled={!isSignedIn || driveLoading || !value.trim()}
-            className="flex items-center gap-2 bg-[#4285F4] hover:bg-[#357ABD] text-white border-[#4285F4] transition-smooth"
-          >
-            <Download className="h-4 w-4" />
-            Download from Drive
-          </Button>
+          {/* File Picker Dropdown */}
+          {isSignedIn && files.length > 0 && (
+            <div className="relative file-dropdown-container">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                disabled={driveLoading}
+                className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 border-gray-300 transition-smooth"
+              >
+                <FileText className="h-4 w-4" />
+                Select File
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+
+              {isDropdownOpen && (
+                <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-300 rounded-md shadow-lg z-10 max-h-60 overflow-y-auto">
+                  {files.map((file) => (
+                    <button
+                      key={file.id}
+                      onClick={() => handleFileSelect(file.id)}
+                      className="w-full px-3 py-2 text-left hover:bg-gray-100 text-sm border-b border-gray-100 last:border-b-0"
+                    >
+                      <div className="font-medium text-gray-900 truncate">
+                        {file.name}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {new Date(file.modifiedTime).toLocaleDateString()}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <Button
             variant="outline"
             size="sm"
