@@ -32,8 +32,8 @@ export class GoogleDriveService {
     private isSignedIn = false;
     private currentUser: GoogleDriveUser | null = null;
     private accessToken: string | null = null;
-    private appFolderId: string | null = null;
-    private appFolderName = 'Email Generator Templates';
+    private appFolderId: string | null = process.env.NEXT_PUBLIC_DRIVE_FOLDER_ID || null;
+    private appFolderName: string | null = process.env.NEXT_PUBLIC_DRIVE_FOLDER_NAME || null;
 
     private constructor() { }
 
