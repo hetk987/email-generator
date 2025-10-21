@@ -28,11 +28,6 @@ export function ResizablePanels({
   const [showShortcuts, setShowShortcuts] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Calculate pixel values
-  const leftWidthPx = leftWidth * (containerRef.current?.clientWidth || 800);
-  const rightWidthPx =
-    (1 - leftWidth) * (containerRef.current?.clientWidth || 800);
-
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setIsDragging(true);
@@ -46,15 +41,9 @@ export function ResizablePanels({
       const containerWidth = containerRect.width;
       const newLeftWidth = (e.clientX - containerRect.left) / containerWidth;
 
-      // Apply constraints
       const minWidth = minPanelWidth / containerWidth;
       const maxWidth = 1 - minWidth;
-      const constrainedWidth = Math.max(
-        minWidth,
-        Math.min(maxWidth, newLeftWidth)
-      );
-
-      setLeftWidth(constrainedWidth);
+      setLeftWidth(Math.max(minWidth, Math.min(maxWidth, newLeftWidth)));
     },
     [isDragging, minPanelWidth]
   );
@@ -86,19 +75,14 @@ export function ResizablePanels({
 
   const toggleLeftFullscreen = useCallback(() => {
     setIsLeftFullscreen(!isLeftFullscreen);
-    if (!isLeftFullscreen) {
-      setIsRightFullscreen(false);
-    }
+    if (!isLeftFullscreen) setIsRightFullscreen(false);
   }, [isLeftFullscreen]);
 
   const toggleRightFullscreen = useCallback(() => {
     setIsRightFullscreen(!isRightFullscreen);
-    if (!isRightFullscreen) {
-      setIsLeftFullscreen(false);
-    }
+    if (!isRightFullscreen) setIsLeftFullscreen(false);
   }, [isRightFullscreen]);
 
-  // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) {
@@ -115,7 +99,6 @@ export function ResizablePanels({
         }
       }
     };
-
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [toggleLeftFullscreen, toggleRightFullscreen]);
@@ -123,7 +106,7 @@ export function ResizablePanels({
   return (
     <div
       ref={containerRef}
-      className="flex h-full w-full relative border border-border rounded-xl shadow-brand bg-card overflow-hidden"
+      className="flex h-full w-full relative border border-border rounded-xl shadow-brand bg-card"
     >
       {/* Left Panel */}
       <div
@@ -131,7 +114,7 @@ export function ResizablePanels({
           isLeftFullscreen
             ? "w-full"
             : isRightFullscreen
-              ? "w-0 overflow-hidden"
+              ? "w-0"
               : "flex-shrink-0"
         }`}
         style={{
@@ -161,7 +144,9 @@ export function ResizablePanels({
               )}
             </Button>
           </div>
-          <div className="flex-1 overflow-hidden">{leftPanel}</div>
+          <div className="flex-1 overflow-hidden flex flex-col">
+            {leftPanel}
+          </div>
         </div>
       </div>
 
@@ -215,7 +200,9 @@ export function ResizablePanels({
               )}
             </Button>
           </div>
-          <div className="flex-1 overflow-hidden">{rightPanel}</div>
+          <div className="flex-1 overflow-hidden flex flex-col">
+            {rightPanel}
+          </div>
         </div>
       </div>
 

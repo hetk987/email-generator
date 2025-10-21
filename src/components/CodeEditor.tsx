@@ -72,7 +72,7 @@ export function CodeEditor({
   );
 
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full ">
       <Editor
         height={height}
         defaultLanguage="javascript"

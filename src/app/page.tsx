@@ -34,7 +34,6 @@ import { DEFAULT_TEMPLATE } from "@/templates/default";
  * Handles JSX compilation, React Email rendering, and Tailwind CSS processing.
  */
 export default function EmailGenerator() {
-  // Component state
   const [activeTab, setActiveTab] = useState("editor");
   const [code, setCode] = useState(DEFAULT_TEMPLATE.code);
   const [htmlContent, setHtmlContent] = useState("");
@@ -42,24 +41,9 @@ export default function EmailGenerator() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [detectedFunction, setDetectedFunction] = useState<string>("");
 
-  // API context
   const { fetchAllApis, apiData, isLoading: isApiLoading } = useApi();
 
-  /**
-   * Generates HTML from the user's React Email code
-   *
-   * Process:
-   * 1. Validates input code
-   * 2. Fetches API data if endpoints are configured
-   * 3. Imports React Email components dynamically
-   * 4. Imports custom components and assets
-   * 5. Transforms JSX to JavaScript using Babel
-   * 6. Executes the transformed code in a sandboxed environment with API data
-   * 7. Renders the React component to HTML using React Email's render function
-   * 8. Updates the preview with the generated HTML
-   */
   const generateHtml = async () => {
-    // Input validation
     if (!code.trim()) {
       setError("Please enter some code to generate the email");
       return;
@@ -70,15 +54,12 @@ export default function EmailGenerator() {
     setDetectedFunction("");
 
     try {
-      // Step 1: Fetch API data if endpoints are configured
       console.log("🔄 Starting email generation...");
       await fetchAllApis();
 
-      // Prepare API data for template usage
       const apiDataForTemplate = getApiDataForTemplate(apiData);
       console.log("📊 API Data for template:", apiDataForTemplate);
 
-      // Step 2: Import React Email components dynamically
       const {
         Html,
         Head,
@@ -92,13 +73,11 @@ export default function EmailGenerator() {
         Tailwind,
       } = await import("@react-email/components");
 
-      // Step 3: Import custom components and assets
       const { CustomButton, Card, Header, Footer } = await import(
         "@/components/email"
       );
       const { logoUrl, heroBgUrl } = await import("@/assets");
 
-      // Step 4: Transform JSX to JavaScript using Babel
       const { transform } = await import("@babel/standalone");
 
       let transformedCode;
@@ -109,14 +88,10 @@ export default function EmailGenerator() {
         });
         transformedCode = result.code;
       } catch (babelError) {
-        // Fallback: If JSX transformation fails, try to execute as-is
-        // (might be React.createElement syntax)
         console.error(babelError);
         transformedCode = code;
       }
 
-      // Step 5: Create sandboxed execution environment with API data
-      // The Tailwind component automatically handles className → inline styles conversion
       const executeTemplate = new Function(
         "React",
         "Html",
@@ -140,8 +115,6 @@ export default function EmailGenerator() {
         `
         ${transformedCode}
         
-        // Simple function detection - find the single function in the code
-        // Look for function declarations that start with a capital letter (React component convention)
         const functionRegex = /(?:const|let|var|function)\\s+([A-Z][a-zA-Z0-9_]*)/g;
         const matches = [...transformedCode.matchAll(functionRegex)];
         
@@ -149,13 +122,9 @@ export default function EmailGenerator() {
           throw new Error("No React component function found. Please define a function starting with a capital letter.");
         }
         
-        // Get the first (and only) function name
         const functionName = matches[0][1];
-        
-        // Store the function name for display
         window.detectedFunctionName = functionName;
         
-        // Get and execute the function
         const component = eval(functionName);
         
         if (typeof component !== 'function') {
@@ -166,7 +135,6 @@ export default function EmailGenerator() {
         `
       );
 
-      // Step 6: Execute the template code with React Email components, custom components, and API data
       const emailElement = executeTemplate(
         React,
         Html,
@@ -189,17 +157,14 @@ export default function EmailGenerator() {
         transformedCode
       );
 
-      // Step 7: Capture the detected function name
       const detectedFunctionName =
         (window as any).detectedFunctionName || "Unknown";
       setDetectedFunction(detectedFunctionName);
 
-      // Step 8: Render React component to email-compatible HTML
       const { render } = await import("@react-email/render");
       const htmlResult = await render(emailElement);
       setHtmlContent(htmlResult);
     } catch (err) {
-      // Error handling: Display user-friendly error messages
       const errorMessage =
         err instanceof Error ? err.message : "Failed to generate email";
       setError(errorMessage);
@@ -209,10 +174,6 @@ export default function EmailGenerator() {
     }
   };
 
-  /**
-   * Handles code editor changes
-   * Updates the code state when user types in the Monaco editor
-   */
   const handleCodeChange = (newCode: string) => {
     setCode(newCode);
   };
@@ -223,14 +184,14 @@ export default function EmailGenerator() {
   };
 
   return (
-    <div className="min-h-screen bg-background align-middle flex flex-col ">
+    <div className="h-screen bg-background flex flex-col">
       {/* Application Header */}
-      <header className="border-b bg-card shadow-sm">
-        <div className="container mx-auto px-4 py-6">
+      <header className="border-b bg-card shadow-sm flex-shrink-0">
+        <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-brand-primary rounded-xl shadow-brand">
-                <Mail className="h-6 w-6 text-white" />
+                <Mail className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-brand-primary">
@@ -254,7 +215,7 @@ export default function EmailGenerator() {
               <Button
                 onClick={generateHtml}
                 disabled={isGenerating || isApiLoading}
-                className="flex items-center gap-2 bg-brand-primary hover:bg-brand-primary/90 text-white shadow-brand transition-smooth hover-lift"
+                className="flex items-center gap-2 bg-brand-primary hover:bg-brand-primary/90 text-primary-foreground shadow-brand transition-smooth hover-lift"
               >
                 <Eye className="h-4 w-4" />
                 {isGenerating
@@ -269,60 +230,37 @@ export default function EmailGenerator() {
       </header>
 
       {/* Main Editor and Preview Area */}
-
-      <main className="container mx-auto px-4 py-6 h-[calc(100vh-200px)]">
+      <main className="flex-1 min-h-0">
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
           className="h-full flex flex-col"
         >
-          <TabsList className="justify-start w-fit bg-card border border-border rounded-xl p-1 shadow-sm">
+          <TabsList className="justify-start w-fit bg-card border border-border rounded-xl p-1 shadow-sm mb-4 mx-4 mt-4 flex-shrink-0">
             <TabsTrigger
               value="editor"
-              className="data-[state=active]:bg-brand-primary data-[state=active]:text-white data-[state=active]:shadow-brand transition-smooth"
+              className="data-[state=active]:bg-brand-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-brand transition-smooth"
             >
               <Code className="w-4 h-4 mr-2" />
               Editor
             </TabsTrigger>
             <TabsTrigger
               value="templates"
-              className="data-[state=active]:bg-brand-primary data-[state=active]:text-white data-[state=active]:shadow-brand transition-smooth"
+              className="data-[state=active]:bg-brand-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-brand transition-smooth"
             >
               <Palette className="w-4 h-4 mr-2" />
               Templates
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="editor" className="flex-1">
+
+          <TabsContent value="editor" className="flex-1 min-h-0 mt-0 px-4 pb-4">
             <ResizablePanels
               leftPanel={
-                <div className="h-full flex flex-col bg-card rounded-xl border border-border shadow-brand">
-                  <div className="flex items-center justify-between p-4 border-b border-border bg-card rounded-t-xl">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-brand-primary rounded-lg">
-                        <Code className="h-4 w-4 text-white" />
-                      </div>
-                      <span className="font-semibold text-sm text-brand-primary">
-                        React Email Code
-                      </span>
-                    </div>
-                    <Button
-                      onClick={generateHtml}
-                      disabled={isGenerating}
-                      size="sm"
-                      className="flex items-center gap-2 bg-brand-primary hover:bg-brand-primary/90 text-white shadow-brand transition-smooth hover-lift"
-                    >
-                      <Eye className="h-4 w-4" />
-                      {isGenerating ? "Generating..." : "Generate"}
-                    </Button>
-                  </div>
-                  <div className="flex-1 rounded-b-xl overflow-hidden">
-                    <CodeEditor
-                      value={code}
-                      onChange={handleCodeChange}
-                      height="100%"
-                    />
-                  </div>
-                </div>
+                <CodeEditor
+                  value={code}
+                  onChange={handleCodeChange}
+                  height="100%"
+                />
               }
               rightPanel={
                 <EmailPreview
@@ -337,7 +275,11 @@ export default function EmailGenerator() {
               minPanelWidth={250}
             />
           </TabsContent>
-          <TabsContent value="templates" className="m-0 h-[calc(100vh-140px)]">
+
+          <TabsContent
+            value="templates"
+            className="flex-1 min-h-0 mt-0 px-4 pb-4"
+          >
             <TemplateGallery onTemplateSelect={handleTemplateSelect} />
           </TabsContent>
         </Tabs>

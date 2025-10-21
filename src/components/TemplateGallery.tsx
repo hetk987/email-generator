@@ -21,9 +21,9 @@ interface TemplateGalleryProps {
 export function TemplateGallery({ onTemplateSelect }: TemplateGalleryProps) {
   console.log(templates);
   return (
-    <div className="h-full bg-background">
+    <div className="h-full flex flex-col bg-background">
       {/* Header */}
-      <div className="border-b border-border bg-card p-6">
+      <div className="border-b border-border bg-card p-6 flex-shrink-0">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl font-bold mb-2 text-brand-primary">
             Find your Template
@@ -36,7 +36,7 @@ export function TemplateGallery({ onTemplateSelect }: TemplateGalleryProps) {
       </div>
 
       {/* Templates Grid */}
-      <div className="p-6 overflow-auto h-[calc(100%-140px)]">
+      <div className="p-6 overflow-auto flex-1">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {templates.map((template) => (
@@ -47,7 +47,7 @@ export function TemplateGallery({ onTemplateSelect }: TemplateGalleryProps) {
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-brand-primary rounded-lg text-white">
+                      <div className="p-2 bg-brand-primary rounded-lg text-primary-foreground">
                         {template.icon}
                       </div>
                       <CardTitle className="text-sm font-semibold text-brand-primary">
@@ -63,7 +63,7 @@ export function TemplateGallery({ onTemplateSelect }: TemplateGalleryProps) {
                   </CardDescription>
                   <Button
                     size="sm"
-                    className="w-full bg-brand-primary hover:bg-brand-primary/90 text-white shadow-brand transition-smooth hover-scale"
+                    className="w-full bg-brand-primary hover:bg-brand-primary/90 text-primary-foreground shadow-brand transition-smooth hover-scale"
                     onClick={() => onTemplateSelect(template.code)}
                   >
                     Use Template
