@@ -20,25 +20,19 @@ export interface GoogleDriveUser {
     picture?: string;
 }
 
-// Load Google Identity Services and Drive API scripts
+// Load Google API scripts for traditional OAuth flow
 const loadGoogleScripts = async (): Promise<void> => {
     if (typeof window === 'undefined') return;
 
     return new Promise((resolve, reject) => {
         // Check if scripts are already loaded
-        if (window.google && window.gapi) {
+        if (window.gapi) {
             resolve();
             return;
         }
 
-        let loadedCount = 0;
-        const totalScripts = 2;
-
         const onScriptLoad = () => {
-            loadedCount++;
-            if (loadedCount === totalScripts) {
-                resolve();
-            }
+            resolve();
         };
 
         const onScriptError = (error: any) => {
@@ -46,16 +40,7 @@ const loadGoogleScripts = async (): Promise<void> => {
             reject(new Error(`Failed to load Google API script: ${error}`));
         };
 
-        // Load Google Identity Services script
-        const identityScript = document.createElement('script');
-        identityScript.src = 'https://accounts.google.com/gsi/client';
-        identityScript.async = true;
-        identityScript.defer = true;
-        identityScript.onload = onScriptLoad;
-        identityScript.onerror = onScriptError;
-        document.head.appendChild(identityScript);
-
-        // Load Google API script for Drive operations
+        // Load Google API script for OAuth and Drive operations
         const apiScript = document.createElement('script');
         apiScript.src = 'https://apis.google.com/js/api.js';
         apiScript.async = true;
@@ -104,20 +89,10 @@ export class GoogleDriveService {
             // Wait for scripts to be fully ready
             await new Promise(resolve => setTimeout(resolve, 500));
 
-            // Check if Google Identity Services is available
-            if (!window.google) {
-                throw new Error('Google Identity Services is not available after script loading');
+            // Check if gapi is available
+            if (!window.gapi) {
+                throw new Error('Google API (gapi) is not available after script loading');
             }
-
-            // Initialize Google Identity Services
-            console.log('Initializing Google Identity Services with client ID:', clientId);
-            console.log('Current origin:', window.location.origin);
-
-            window.google.accounts.id.initialize({
-                client_id: clientId,
-                auto_select: false,
-                callback: this.handleCredentialResponse.bind(this)
-            });
 
             // Initialize Google API for Drive operations
             await new Promise<void>((resolve, reject) => {
@@ -146,103 +121,34 @@ export class GoogleDriveService {
         }
     }
 
-    /**
-     * Handle credential response from Google Identity Services
-     */
-    private handleCredentialResponse(response: any): void {
-        try {
-            const credential = response.credential;
-            const payload = JSON.parse(atob(credential.split('.')[1]));
-
-            this.isSignedIn = true;
-            this.currentUser = {
-                id: payload.sub,
-                email: payload.email,
-                name: payload.name,
-                picture: payload.picture
-            };
-
-            // Save credential to localStorage for future sessions
-            localStorage.setItem('google_credential', credential);
-
-            // Exchange credential for access token
-            this.exchangeCredentialForToken(credential);
-
-            // Resolve the sign-in promise if it exists
-            if ((this as any).signInResolve) {
-                (this as any).signInResolve(this.currentUser);
-                (this as any).signInResolve = null;
-                (this as any).signInReject = null;
-            }
-        } catch (error) {
-            console.error('Error handling credential response:', error);
-            if ((this as any).signInReject) {
-                (this as any).signInReject(error);
-                (this as any).signInResolve = null;
-                (this as any).signInReject = null;
-            }
-        }
-    }
-
-    /**
-     * Exchange credential for access token
-     */
-    private async exchangeCredentialForToken(credential: string): Promise<void> {
-        try {
-            const response = await fetch('https://oauth2.googleapis.com/token', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams({
-                    grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-                    assertion: credential,
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error(`Token exchange failed: ${response.statusText}`);
-            }
-
-            const tokenData = await response.json();
-            this.accessToken = tokenData.access_token;
-
-            // Set the access token for gapi client
-            if (window.gapi && window.gapi.client) {
-                window.gapi.client.setApiKey(this.accessToken);
-            }
-        } catch (error) {
-            console.error('Error exchanging credential for token:', error);
-        }
-    }
 
     /**
      * Check if user is already signed in from previous session
      */
     private checkExistingSignIn(): void {
         try {
-            // Check localStorage for existing credential
-            const savedCredential = localStorage.getItem('google_credential');
-            if (savedCredential) {
-                const payload = JSON.parse(atob(savedCredential.split('.')[1]));
-
-                // Check if token is still valid (not expired)
-                const currentTime = Math.floor(Date.now() / 1000);
-                if (payload.exp && payload.exp > currentTime) {
-                    this.handleCredentialResponse({ credential: savedCredential });
-                } else {
-                    // Token expired, remove it
-                    localStorage.removeItem('google_credential');
+            // Check if user is already signed in with traditional OAuth
+            if (window.gapi && window.gapi.auth2) {
+                const authInstance = window.gapi.auth2.getAuthInstance();
+                if (authInstance && authInstance.isSignedIn.get()) {
+                    this.isSignedIn = true;
+                    const user = authInstance.currentUser.get();
+                    this.currentUser = {
+                        id: user.getId(),
+                        email: user.getBasicProfile().getEmail(),
+                        name: user.getBasicProfile().getName(),
+                        picture: user.getBasicProfile().getImageUrl()
+                    };
+                    this.accessToken = user.getAuthResponse().access_token;
                 }
             }
         } catch (error) {
             console.error('Error checking existing sign in:', error);
-            localStorage.removeItem('google_credential');
         }
     }
 
     /**
-     * Sign in to Google Drive using Google Identity Services
+     * Sign in to Google Drive using traditional OAuth flow (more reliable for Drive API)
      */
     public async signIn(): Promise<GoogleDriveUser> {
         if (typeof window === 'undefined') {
@@ -253,31 +159,41 @@ export class GoogleDriveService {
             await this.initialize();
         }
 
-        return new Promise((resolve, reject) => {
-            try {
-                // Store resolve/reject for callback
-                (this as any).signInResolve = resolve;
-                (this as any).signInReject = reject;
+        try {
+            // Use the traditional OAuth flow for Drive API access
+            await new Promise<void>((resolve, reject) => {
+                window.gapi.load('auth2', async () => {
+                    try {
+                        const authInstance = await window.gapi.auth2.init({
+                            client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
+                            scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly'
+                        });
 
-                // Trigger Google Sign-In popup
-                window.google.accounts.id.prompt((notification: any) => {
-                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-                        reject(new Error('Sign-in was cancelled or not displayed'));
+                        const user = await authInstance.signIn();
+
+                        this.isSignedIn = true;
+                        this.currentUser = {
+                            id: user.getId(),
+                            email: user.getBasicProfile().getEmail(),
+                            name: user.getBasicProfile().getName(),
+                            picture: user.getBasicProfile().getImageUrl()
+                        };
+
+                        this.accessToken = user.getAuthResponse().access_token;
+
+                        resolve();
+                    } catch (error) {
+                        console.error('OAuth sign-in failed:', error);
+                        reject(error);
                     }
                 });
+            });
 
-                // Set up a timeout for the sign-in process
-                setTimeout(() => {
-                    if (!this.isSignedIn) {
-                        reject(new Error('Sign-in timeout'));
-                    }
-                }, 30000); // 30 second timeout
-
-            } catch (error) {
-                console.error('Sign in failed:', error);
-                reject(error);
-            }
-        });
+            return this.currentUser!;
+        } catch (error) {
+            console.error('Sign in failed:', error);
+            throw error;
+        }
     }
 
     /**
@@ -289,18 +205,18 @@ export class GoogleDriveService {
         }
 
         try {
-            // Sign out from Google Identity Services
-            if (window.google && window.google.accounts) {
-                window.google.accounts.id.disableAutoSelect();
+            // Sign out from traditional OAuth
+            if (window.gapi && window.gapi.auth2) {
+                const authInstance = window.gapi.auth2.getAuthInstance();
+                if (authInstance) {
+                    await authInstance.signOut();
+                }
             }
 
             // Clear local state
             this.isSignedIn = false;
             this.currentUser = null;
             this.accessToken = null;
-
-            // Remove stored credential
-            localStorage.removeItem('google_credential');
 
             console.log('Signed out successfully');
         } catch (error) {
