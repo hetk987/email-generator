@@ -5,6 +5,8 @@ import { useCallback, useRef, useContext, useState, useEffect } from "react";
 import { ThemeContext } from "@/contexts/ThemeContext";
 import { useGoogleDrive } from "@/contexts/GoogleDriveContext";
 import { Button } from "@/components/ui/button";
+import { FileNamingDialog } from "@/components/FileNamingDialog";
+import toast from "react-hot-toast";
 import {
   Download,
   Upload,
@@ -48,6 +50,8 @@ export function CodeEditor({
   const [mounted, setMounted] = useState(false);
   const [files, setFiles] = useState<any[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isNamingDialogOpen, setIsNamingDialogOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const themeContext = useContext(ThemeContext);
   const {
     isSignedIn,
@@ -148,16 +152,42 @@ export function CodeEditor({
   );
 
   /**
-   * Handle uploading JSX to Google Drive
+   * Handle opening the file naming dialog
    */
-  const handleUploadToDrive = useCallback(async () => {
-    try {
-      await uploadJsx(value);
-      // You could add a toast notification here
-    } catch (error) {
-      console.error("Failed to upload to Drive:", error);
+  const handleUploadToDrive = useCallback(() => {
+    if (!value.trim()) {
+      toast.error("Please enter some content before uploading");
+      return;
     }
-  }, [uploadJsx, value]);
+    setIsNamingDialogOpen(true);
+  }, [value]);
+
+  /**
+   * Handle confirming file upload with custom name
+   */
+  const handleConfirmUpload = useCallback(
+    async (filename: string) => {
+      try {
+        setIsUploading(true);
+        setIsNamingDialogOpen(false);
+
+        await uploadJsx(value, filename);
+
+        toast.success(
+          `File "${filename}" uploaded successfully to Google Drive!`
+        );
+
+        // Refresh the file list
+        await loadFiles();
+      } catch (error) {
+        console.error("Failed to upload to Drive:", error);
+        toast.error(`Failed to upload "${filename}". Please try again.`);
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [uploadJsx, value, loadFiles]
+  );
 
   return (
     <div className="h-full w-full ">
@@ -235,11 +265,13 @@ export function CodeEditor({
             variant="outline"
             size="sm"
             onClick={handleUploadToDrive}
-            disabled={!isSignedIn || driveLoading || !value.trim()}
+            disabled={
+              !isSignedIn || driveLoading || isUploading || !value.trim()
+            }
             className="flex items-center gap-2 bg-[#4285F4] hover:bg-[#357ABD] text-white border-[#4285F4] transition-smooth"
           >
             <Upload className="h-4 w-4" />
-            Upload to Drive
+            {isUploading ? "Uploading..." : "Upload to Drive"}
           </Button>
         </div>
       </div>
@@ -354,6 +386,14 @@ export function CodeEditor({
           parameterHints: { enabled: true },
           hover: { enabled: true },
         }}
+      />
+
+      <FileNamingDialog
+        isOpen={isNamingDialogOpen}
+        onClose={() => setIsNamingDialogOpen(false)}
+        onConfirm={handleConfirmUpload}
+        fileType="jsx"
+        isLoading={isUploading}
       />
     </div>
   );
