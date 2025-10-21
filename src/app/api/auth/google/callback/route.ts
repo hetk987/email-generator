@@ -52,10 +52,10 @@ export async function GET(request: NextRequest) {
             userId: userInfo.data.id,
             email: userInfo.data.email,
             name: userInfo.data.name || userInfo.data.email,
-            picture: userInfo.data.picture,
+            picture: userInfo.data.picture || undefined,
             refreshToken: tokens.refresh_token!,
-            accessToken: tokens.access_token,
-            tokenExpiry: tokens.expiry_date,
+            accessToken: tokens.access_token || undefined,
+            tokenExpiry: tokens.expiry_date || undefined,
             createdAt: Date.now(),
             updatedAt: Date.now(),
         };

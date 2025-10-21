@@ -96,7 +96,7 @@ export class DriveApiService {
 
             if (response.data.files && response.data.files.length > 0) {
                 this.appFolderId = response.data.files[0].id!;
-                return this.appFolderId;
+                return this.appFolderId!;
             }
 
             // Create new app folder
@@ -109,7 +109,7 @@ export class DriveApiService {
             });
 
             this.appFolderId = folderResponse.data.id!;
-            return this.appFolderId;
+            return this.appFolderId!;
         } catch (error) {
             console.error('Failed to get/create app folder:', error);
             throw new Error('Failed to access app folder');
@@ -130,7 +130,7 @@ export class DriveApiService {
                 orderBy: 'modifiedTime desc',
             });
 
-            return (response.data.files || []).map(file => ({
+            return (response.data.files || []).map((file: any) => ({
                 id: file.id!,
                 name: file.name!,
                 mimeType: file.mimeType!,
