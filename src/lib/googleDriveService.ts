@@ -20,19 +20,25 @@ export interface GoogleDriveUser {
     picture?: string;
 }
 
-// Load Google API scripts for traditional OAuth flow
+// Load Google Identity Services and Drive API scripts
 const loadGoogleScripts = async (): Promise<void> => {
     if (typeof window === 'undefined') return;
 
     return new Promise((resolve, reject) => {
         // Check if scripts are already loaded
-        if (window.gapi) {
+        if (window.google && window.gapi) {
             resolve();
             return;
         }
 
+        let loadedCount = 0;
+        const totalScripts = 2;
+
         const onScriptLoad = () => {
-            resolve();
+            loadedCount++;
+            if (loadedCount === totalScripts) {
+                resolve();
+            }
         };
 
         const onScriptError = (error: any) => {
@@ -40,7 +46,16 @@ const loadGoogleScripts = async (): Promise<void> => {
             reject(new Error(`Failed to load Google API script: ${error}`));
         };
 
-        // Load Google API script for OAuth and Drive operations
+        // Load Google Identity Services script
+        const identityScript = document.createElement('script');
+        identityScript.src = 'https://accounts.google.com/gsi/client';
+        identityScript.async = true;
+        identityScript.defer = true;
+        identityScript.onload = onScriptLoad;
+        identityScript.onerror = onScriptError;
+        document.head.appendChild(identityScript);
+
+        // Load Google API script for Drive operations
         const apiScript = document.createElement('script');
         apiScript.src = 'https://apis.google.com/js/api.js';
         apiScript.async = true;
@@ -89,10 +104,20 @@ export class GoogleDriveService {
             // Wait for scripts to be fully ready
             await new Promise(resolve => setTimeout(resolve, 500));
 
-            // Check if gapi is available
-            if (!window.gapi) {
-                throw new Error('Google API (gapi) is not available after script loading');
+            // Check if Google Identity Services is available
+            if (!window.google) {
+                throw new Error('Google Identity Services is not available after script loading');
             }
+
+            // Initialize Google Identity Services
+            console.log('Initializing Google Identity Services with client ID:', clientId);
+            console.log('Current origin:', window.location.origin);
+
+            window.google.accounts.id.initialize({
+                client_id: clientId,
+                auto_select: false,
+                callback: this.handleCredentialResponse.bind(this)
+            });
 
             // Initialize Google API for Drive operations
             await new Promise<void>((resolve, reject) => {
@@ -112,43 +137,79 @@ export class GoogleDriveService {
                 });
             });
 
-            // Check if user is already signed in (from previous session)
-            this.checkExistingSignIn();
-
         } catch (error) {
             console.error('Failed to initialize Google API:', error);
             throw error;
         }
     }
 
+    /**
+     * Handle credential response from Google Identity Services
+     */
+    private handleCredentialResponse(response: any): void {
+        try {
+            const credential = response.credential;
+            const payload = JSON.parse(atob(credential.split('.')[1]));
+
+            this.isSignedIn = true;
+            this.currentUser = {
+                id: payload.sub,
+                email: payload.email,
+                name: payload.name,
+                picture: payload.picture
+            };
+
+            // Store the credential for Drive API access
+            this.accessToken = credential;
+
+            // Save credential to localStorage for future sessions
+            localStorage.setItem('google_credential', credential);
+
+            // Resolve the sign-in promise if it exists
+            if ((this as any).signInResolve) {
+                (this as any).signInResolve(this.currentUser);
+                (this as any).signInResolve = null;
+                (this as any).signInReject = null;
+            }
+
+            console.log('User signed in successfully:', this.currentUser);
+        } catch (error) {
+            console.error('Error handling credential response:', error);
+            if ((this as any).signInReject) {
+                (this as any).signInReject(error);
+                (this as any).signInResolve = null;
+                (this as any).signInReject = null;
+            }
+        }
+    }
 
     /**
      * Check if user is already signed in from previous session
      */
     private checkExistingSignIn(): void {
         try {
-            // Check if user is already signed in with traditional OAuth
-            if (window.gapi && window.gapi.auth2) {
-                const authInstance = window.gapi.auth2.getAuthInstance();
-                if (authInstance && authInstance.isSignedIn.get()) {
-                    this.isSignedIn = true;
-                    const user = authInstance.currentUser.get();
-                    this.currentUser = {
-                        id: user.getId(),
-                        email: user.getBasicProfile().getEmail(),
-                        name: user.getBasicProfile().getName(),
-                        picture: user.getBasicProfile().getImageUrl()
-                    };
-                    this.accessToken = user.getAuthResponse().access_token;
+            // Check localStorage for existing credential
+            const savedCredential = localStorage.getItem('google_credential');
+            if (savedCredential) {
+                const payload = JSON.parse(atob(savedCredential.split('.')[1]));
+
+                // Check if token is still valid (not expired)
+                const currentTime = Math.floor(Date.now() / 1000);
+                if (payload.exp && payload.exp > currentTime) {
+                    this.handleCredentialResponse({ credential: savedCredential });
+                } else {
+                    // Token expired, remove it
+                    localStorage.removeItem('google_credential');
                 }
             }
         } catch (error) {
             console.error('Error checking existing sign in:', error);
+            localStorage.removeItem('google_credential');
         }
     }
 
     /**
-     * Sign in to Google Drive using traditional OAuth flow (more reliable for Drive API)
+     * Sign in to Google Drive using Google Identity Services
      */
     public async signIn(): Promise<GoogleDriveUser> {
         if (typeof window === 'undefined') {
@@ -159,41 +220,31 @@ export class GoogleDriveService {
             await this.initialize();
         }
 
-        try {
-            // Use the traditional OAuth flow for Drive API access
-            await new Promise<void>((resolve, reject) => {
-                window.gapi.load('auth2', async () => {
-                    try {
-                        const authInstance = await window.gapi.auth2.init({
-                            client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
-                            scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly'
-                        });
+        return new Promise((resolve, reject) => {
+            try {
+                // Store resolve/reject for callback
+                (this as any).signInResolve = resolve;
+                (this as any).signInReject = reject;
 
-                        const user = await authInstance.signIn();
-
-                        this.isSignedIn = true;
-                        this.currentUser = {
-                            id: user.getId(),
-                            email: user.getBasicProfile().getEmail(),
-                            name: user.getBasicProfile().getName(),
-                            picture: user.getBasicProfile().getImageUrl()
-                        };
-
-                        this.accessToken = user.getAuthResponse().access_token;
-
-                        resolve();
-                    } catch (error) {
-                        console.error('OAuth sign-in failed:', error);
-                        reject(error);
+                // Trigger Google Sign-In popup
+                window.google.accounts.id.prompt((notification: any) => {
+                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                        reject(new Error('Sign-in was cancelled or not displayed'));
                     }
                 });
-            });
 
-            return this.currentUser!;
-        } catch (error) {
-            console.error('Sign in failed:', error);
-            throw error;
-        }
+                // Set up a timeout for the sign-in process
+                setTimeout(() => {
+                    if (!this.isSignedIn) {
+                        reject(new Error('Sign-in timeout'));
+                    }
+                }, 30000); // 30 second timeout
+
+            } catch (error) {
+                console.error('Sign in failed:', error);
+                reject(error);
+            }
+        });
     }
 
     /**
@@ -205,18 +256,18 @@ export class GoogleDriveService {
         }
 
         try {
-            // Sign out from traditional OAuth
-            if (window.gapi && window.gapi.auth2) {
-                const authInstance = window.gapi.auth2.getAuthInstance();
-                if (authInstance) {
-                    await authInstance.signOut();
-                }
+            // Sign out from Google Identity Services
+            if (window.google && window.google.accounts) {
+                window.google.accounts.id.disableAutoSelect();
             }
 
             // Clear local state
             this.isSignedIn = false;
             this.currentUser = null;
             this.accessToken = null;
+
+            // Remove stored credential
+            localStorage.removeItem('google_credential');
 
             console.log('Signed out successfully');
         } catch (error) {
@@ -241,6 +292,8 @@ export class GoogleDriveService {
 
     /**
      * Open Google Drive file picker and return selected file content
+     * Note: For Google Identity Services, we'll need to implement a different approach
+     * as the picker API requires OAuth access tokens, not JWT credentials
      */
     public async pickFileFromDrive(): Promise<GoogleDriveFile> {
         if (typeof window === 'undefined') {
@@ -251,39 +304,14 @@ export class GoogleDriveService {
             await this.initialize();
         }
 
-        if (!this.isSignedIn || !this.accessToken) {
+        if (!this.isSignedIn) {
             throw new Error('User must be signed in to access Google Drive');
         }
 
-        return new Promise((resolve, reject) => {
-            // Load the picker API
-            window.gapi.load('picker', () => {
-                const picker = new window.google.picker.PickerBuilder()
-                    .addView(window.google.picker.ViewId.DOCS)
-                    .setOAuthToken(this.accessToken!)
-                    .setDeveloperKey(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!)
-                    .setCallback((data: any) => {
-                        if (data.action === window.google.picker.Action.PICKED) {
-                            const fileId = data.docs[0].id;
-                            this.downloadFileContent(fileId)
-                                .then(content => {
-                                    resolve({
-                                        id: fileId,
-                                        name: data.docs[0].name,
-                                        mimeType: data.docs[0].mimeType,
-                                        content: content
-                                    });
-                                })
-                                .catch(reject);
-                        } else if (data.action === window.google.picker.Action.CANCEL) {
-                            reject(new Error('File picker was cancelled'));
-                        }
-                    })
-                    .build();
-
-                picker.setVisible(true);
-            });
-        });
+        // For now, we'll show an error message explaining the limitation
+        // In a production app, you'd need to implement a server-side OAuth flow
+        // or use a different approach for Drive API access
+        throw new Error('File picker functionality requires OAuth access tokens. Please use the upload functionality instead, or implement a server-side OAuth flow for full Drive API access.');
     }
 
     /**
@@ -305,104 +333,38 @@ export class GoogleDriveService {
 
     /**
      * Upload HTML content to Google Drive
+     * Note: This requires OAuth access tokens, not JWT credentials from Google Identity Services
      */
     public async uploadHtmlToDrive(htmlContent: string, filename?: string): Promise<string> {
         if (!this.isInitialized) {
             await this.initialize();
         }
 
-        if (!this.isSignedIn || !this.accessToken) {
+        if (!this.isSignedIn) {
             throw new Error('User must be signed in to upload to Google Drive');
         }
 
-        const folderId = process.env.NEXT_PUBLIC_DRIVE_FOLDER_ID;
-        if (!folderId) {
-            throw new Error('Drive folder ID not found. Please set NEXT_PUBLIC_DRIVE_FOLDER_ID in your environment variables.');
-        }
-
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const finalFilename = filename || `email-template-${timestamp}.html`;
-
-        try {
-            const metadata = {
-                name: finalFilename,
-                parents: [folderId],
-                mimeType: 'text/html'
-            };
-
-            const form = new FormData();
-            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-            form.append('file', new Blob([htmlContent], { type: 'text/html' }));
-
-            const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${this.accessToken}`
-                },
-                body: form
-            });
-
-            if (!response.ok) {
-                throw new Error(`Upload failed: ${response.statusText}`);
-            }
-
-            const result = await response.json();
-            return result.id;
-        } catch (error) {
-            console.error('Failed to upload to Google Drive:', error);
-            throw error;
-        }
+        // For Google Identity Services, we can't directly upload to Drive API
+        // as it requires OAuth access tokens, not JWT credentials
+        throw new Error('Upload functionality requires OAuth access tokens. Google Identity Services provides authentication but not Drive API access. Consider implementing a server-side OAuth flow for full Drive API functionality.');
     }
 
     /**
      * Upload JSX content to Google Drive
+     * Note: This requires OAuth access tokens, not JWT credentials from Google Identity Services
      */
     public async uploadJsxToDrive(jsxContent: string, filename?: string): Promise<string> {
         if (!this.isInitialized) {
             await this.initialize();
         }
 
-        if (!this.isSignedIn || !this.accessToken) {
+        if (!this.isSignedIn) {
             throw new Error('User must be signed in to upload to Google Drive');
         }
 
-        const folderId = process.env.NEXT_PUBLIC_DRIVE_FOLDER_ID;
-        if (!folderId) {
-            throw new Error('Drive folder ID not found. Please set NEXT_PUBLIC_DRIVE_FOLDER_ID in your environment variables.');
-        }
-
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const finalFilename = filename || `email-template-${timestamp}.jsx`;
-
-        try {
-            const metadata = {
-                name: finalFilename,
-                parents: [folderId],
-                mimeType: 'text/javascript'
-            };
-
-            const form = new FormData();
-            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-            form.append('file', new Blob([jsxContent], { type: 'text/javascript' }));
-
-            const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${this.accessToken}`
-                },
-                body: form
-            });
-
-            if (!response.ok) {
-                throw new Error(`Upload failed: ${response.statusText}`);
-            }
-
-            const result = await response.json();
-            return result.id;
-        } catch (error) {
-            console.error('Failed to upload JSX to Google Drive:', error);
-            throw error;
-        }
+        // For Google Identity Services, we can't directly upload to Drive API
+        // as it requires OAuth access tokens, not JWT credentials
+        throw new Error('Upload functionality requires OAuth access tokens. Google Identity Services provides authentication but not Drive API access. Consider implementing a server-side OAuth flow for full Drive API functionality.');
     }
 }
 
