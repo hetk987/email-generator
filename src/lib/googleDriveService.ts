@@ -164,7 +164,7 @@ export class GoogleDriveService {
             // Use Google Identity Services for authentication
             window.google.accounts.oauth2.initTokenClient({
                 client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-                scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
+                scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
                 callback: async (response: any) => {
                     try {
                         if (response.error) {
@@ -242,6 +242,13 @@ export class GoogleDriveService {
      * Get or create app-specific folder
      */
     private async getAppFolder(): Promise<string> {
+        // Check if we're working with a shared drive folder ID
+        if (this.appFolderId && this.appFolderId.startsWith('1Rr9zqZ9UpF27egCpa8Cv_cEg5dXiNTIm')) {
+            this.isSharedDrive = true;
+            console.log('Using shared drive folder:', this.appFolderId);
+            return this.appFolderId;
+        }
+
         if (this.appFolderId) {
             return this.appFolderId;
         }
@@ -249,12 +256,6 @@ export class GoogleDriveService {
         try {
             if (!this.accessToken) {
                 throw new Error('No access token available');
-            }
-
-            // Check if we're working with a shared drive folder ID
-            if (this.appFolderId && this.appFolderId.startsWith('1Rr9zqZ9UpF27egCpa8Cv_cEg5dXiNTIm')) {
-                this.isSharedDrive = true;
-                return this.appFolderId;
             }
 
             // Search for existing app folder (include shared drives)
@@ -412,6 +413,10 @@ export class GoogleDriveService {
             const fileName = filename || `email-template-${Date.now()}.html`;
             const folderId = await this.getAppFolder();
 
+            console.log('Upload HTML - Folder ID:', folderId);
+            console.log('Upload HTML - Is Shared Drive:', this.isSharedDrive);
+            console.log('Upload HTML - File Name:', fileName);
+
             // Check if file already exists (include shared drives)
             const searchParams = new URLSearchParams({
                 q: `name='${fileName}' and '${folderId}' in parents and trashed=false`,
@@ -469,7 +474,9 @@ export class GoogleDriveService {
                 });
 
                 if (!createResponse.ok) {
-                    throw new Error('Failed to create file');
+                    const errorText = await createResponse.text();
+                    console.error('Create file error response:', errorText);
+                    throw new Error(`Failed to create file: ${createResponse.status} ${createResponse.statusText} - ${errorText}`);
                 }
 
                 const createData = await createResponse.json();
@@ -490,17 +497,20 @@ export class GoogleDriveService {
             parents: [folderId]
         });
 
-        return [
-            '--boundary',
+        const boundary = 'boundary';
+        const parts = [
+            `--${boundary}`,
             'Content-Type: application/json; charset=UTF-8',
             '',
             metadata,
-            '--boundary',
+            `--${boundary}`,
             `Content-Type: ${mimeType}`,
             '',
             content,
-            '--boundary--'
-        ].join('\r\n');
+            `--${boundary}--`
+        ];
+
+        return parts.join('\r\n');
     }
 
     /**
@@ -518,6 +528,10 @@ export class GoogleDriveService {
         try {
             const fileName = filename || `email-template-${Date.now()}.jsx`;
             const folderId = await this.getAppFolder();
+
+            console.log('Upload JSX - Folder ID:', folderId);
+            console.log('Upload JSX - Is Shared Drive:', this.isSharedDrive);
+            console.log('Upload JSX - File Name:', fileName);
 
             // Check if file already exists (include shared drives)
             const searchParams = new URLSearchParams({
@@ -576,7 +590,9 @@ export class GoogleDriveService {
                 });
 
                 if (!createResponse.ok) {
-                    throw new Error('Failed to create file');
+                    const errorText = await createResponse.text();
+                    console.error('Create JSX file error response:', errorText);
+                    throw new Error(`Failed to create file: ${createResponse.status} ${createResponse.statusText} - ${errorText}`);
                 }
 
                 const createData = await createResponse.json();

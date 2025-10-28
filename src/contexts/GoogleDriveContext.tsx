@@ -24,6 +24,7 @@ interface GoogleDriveContextType {
   listFiles: () => Promise<GoogleDriveFile[]>;
   uploadHtml: (htmlContent: string, filename?: string) => Promise<string>;
   uploadJsx: (jsxContent: string, filename?: string) => Promise<string>;
+  setSharedDriveFolder: (folderId: string) => void;
   error: string | null;
   clearError: () => void;
 }
@@ -56,6 +57,11 @@ export function GoogleDriveProvider({ children }: GoogleDriveProviderProps) {
       try {
         setIsLoading(true);
         await googleDriveService.initialize();
+
+        // Set the shared drive folder ID
+        googleDriveService.setSharedDriveFolder(
+          "1Rr9zqZ9UpF27egCpa8Cv_cEg5dXiNTIm"
+        );
 
         // Check if user is already signed in
         const signedIn = googleDriveService.getIsSignedIn();
@@ -244,6 +250,13 @@ export function GoogleDriveProvider({ children }: GoogleDriveProviderProps) {
     setError(null);
   }, []);
 
+  /**
+   * Set shared drive folder ID
+   */
+  const setSharedDriveFolder = useCallback((folderId: string) => {
+    googleDriveService.setSharedDriveFolder(folderId);
+  }, []);
+
   const value: GoogleDriveContextType = {
     isSignedIn,
     user,
@@ -254,6 +267,7 @@ export function GoogleDriveProvider({ children }: GoogleDriveProviderProps) {
     listFiles,
     uploadHtml,
     uploadJsx,
+    setSharedDriveFolder,
     error,
     clearError,
   };
