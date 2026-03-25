@@ -7,11 +7,9 @@ import { ResizablePanels } from "@/components/ResizablePanels";
 import { Button } from "@/components/ui/button";
 import { Mail, Code, Eye, Palette, Settings, HelpCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TemplateGallery } from "@/components/TemplateGallery";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ApiConfigurationModal } from "@/components/ApiConfigurationModal";
 import { useApi, getApiDataForTemplate } from "@/contexts/ApiContext";
-import { DEFAULT_TEMPLATE } from "@/templates/default";
 import { Documentation } from "@/components/Documentation";
 
 /**
@@ -36,7 +34,7 @@ import { Documentation } from "@/components/Documentation";
  */
 export default function EmailGenerator() {
   const [activeTab, setActiveTab] = useState("editor");
-  const [code, setCode] = useState(DEFAULT_TEMPLATE.code);
+  const [code, setCode] = useState("");
   const [htmlContent, setHtmlContent] = useState("");
   const [error, setError] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -179,11 +177,6 @@ export default function EmailGenerator() {
     setCode(newCode);
   };
 
-  const handleTemplateSelect = (templateCode: string) => {
-    setCode(templateCode);
-    setActiveTab("editor");
-  };
-
   return (
     <div className="h-screen bg-background flex flex-col">
       {/* Application Header */}
@@ -219,13 +212,6 @@ export default function EmailGenerator() {
               >
                 <Code className="w-4 h-4 mr-2" />
                 Editor
-              </TabsTrigger>
-              <TabsTrigger
-                value="templates"
-                className="data-[state=active]:bg-brand-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-brand transition-smooth"
-              >
-                <Palette className="w-4 h-4 mr-2" />
-                Templates
               </TabsTrigger>
               <TabsTrigger
                 value="documentation"
@@ -264,7 +250,7 @@ export default function EmailGenerator() {
             </div>
           </div>
 
-          <TabsContent value="editor" className="flex-1 min-h-0 mt-0 px-4 pb-4">
+          <TabsContent value="editor" className="flex-0 min-h-11 mt-0 px-4 pb-4">
             <ResizablePanels
               leftPanel={
                 <CodeEditor
@@ -288,16 +274,12 @@ export default function EmailGenerator() {
           </TabsContent>
 
           <TabsContent
-            value="templates"
-            className="flex-1 min-h-0 mt-0 px-4 pb-4"
-          >
-            <TemplateGallery onTemplateSelect={handleTemplateSelect} />
-          </TabsContent>
-          <TabsContent
             value="documentation"
-            className="flex-1 min-h-0 mt-0 px-4 pb-4"
+            className="mt-0 flex min-h-0 flex-1 flex-col px-0 pb-0"
           >
-            <Documentation />
+            <div className="min-h-0 flex-1">
+              <Documentation />
+            </div>
           </TabsContent>
         </Tabs>
       </main>
