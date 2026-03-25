@@ -1,4 +1,4 @@
-import { templateAssetGlobals } from "@/assets";
+import { templateAssetGlobals } from "public/assets";
 
 export type PropRow = { name: string; description: string };
 

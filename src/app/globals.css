@@ -3,167 +3,166 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 0%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 0%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
-    --primary: 0 0% 0%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 95%;
-    --secondary-foreground: 0 0% 0%;
-    --muted: 0 0% 95%;
-    --muted-foreground: 0 0% 50%;
-    --accent: 0 0% 90%;
-    --accent-foreground: 0 0% 0%;
-    --destructive: 0 0% 0%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 0 0% 0%;
-    --chart-1: 0 0% 0%;
-    --chart-2: 0 0% 25%;
-    --chart-3: 0 0% 50%;
-    --chart-4: 0 0% 75%;
-    --chart-5: 0 0% 100%;
-    --radius: 0.75rem;
+    :root {
+        --background: 0 0% 100%;
+        --foreground: 0 0% 0%;
+        --card: 0 0% 100%;
+        --card-foreground: 0 0% 0%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 0 0% 0%;
+        --primary: 0 0% 0%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 0 0% 95%;
+        --secondary-foreground: 0 0% 0%;
+        --muted: 0 0% 95%;
+        --muted-foreground: 0 0% 50%;
+        --accent: 0 0% 90%;
+        --accent-foreground: 0 0% 0%;
+        --destructive: 0 0% 0%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 0 0% 90%;
+        --input: 0 0% 90%;
+        --ring: 0 0% 0%;
+        --chart-1: 0 0% 0%;
+        --chart-2: 0 0% 25%;
+        --chart-3: 0 0% 50%;
+        --chart-4: 0 0% 75%;
+        --chart-5: 0 0% 100%;
+        --radius: 0.75rem;
 
-    /* Brand Colors */
-    --brand-primary: 0 0% 0%;
-    --brand-accent: 0 0% 50%;
-    --brand-light: 0 0% 95%;
-    --brand-gradient: linear-gradient(135deg, #000000 0%, #ffffff 100%);
-    --brand-gradient-subtle: linear-gradient(
-      135deg,
-      #f5f5f5 0%,
-      #808080 20%,
-      #000000 100%
-    );
-  }
+        /* Brand Colors */
+        --brand-primary: 0 0% 0%;
+        --brand-accent: 0 0% 50%;
+        --brand-light: 0 0% 95%;
+        --brand-gradient: linear-gradient(135deg, #000000 0%, #ffffff 100%);
+        --brand-gradient-subtle: linear-gradient(
+            135deg,
+            #f5f5f5 0%,
+            #808080 20%,
+            #000000 100%
+        );
+    }
 
-  .dark {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
-    --card: 0 0% 5%;
-    --card-foreground: 0 0% 100%;
-    --popover: 0 0% 5%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 0 0% 100%;
-    --primary-foreground: 0 0% 0%;
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 10%;
-    --muted-foreground: 0 0% 50%;
-    --accent: 0 0% 15%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 0% 100%;
-    --destructive-foreground: 0 0% 0%;
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
-    --ring: 0 0% 100%;
-    --chart-1: 0 0% 100%;
-    --chart-2: 0 0% 75%;
-    --chart-3: 0 0% 50%;
-    --chart-4: 0 0% 25%;
-    --chart-5: 0 0% 0%;
+    .dark {
+        --background: 0 0% 0%;
+        --foreground: 0 0% 100%;
+        --card: 0 0% 5%;
+        --card-foreground: 0 0% 100%;
+        --popover: 0 0% 5%;
+        --popover-foreground: 0 0% 100%;
+        --primary: 0 0% 100%;
+        --primary-foreground: 0 0% 0%;
+        --secondary: 0 0% 10%;
+        --secondary-foreground: 0 0% 100%;
+        --muted: 0 0% 10%;
+        --muted-foreground: 0 0% 50%;
+        --accent: 0 0% 15%;
+        --accent-foreground: 0 0% 100%;
+        --destructive: 0 0% 100%;
+        --destructive-foreground: 0 0% 0%;
+        --border: 0 0% 15%;
+        --input: 0 0% 15%;
+        --ring: 0 0% 100%;
+        --chart-1: 0 0% 100%;
+        --chart-2: 0 0% 75%;
+        --chart-3: 0 0% 50%;
+        --chart-4: 0 0% 25%;
+        --chart-5: 0 0% 0%;
 
-    /* Brand Colors - Dark Mode */
-    --brand-primary: 0 0% 100%;
-    --brand-accent: 0 0% 50%;
-    --brand-light: 0 0% 10%;
-    --brand-gradient: linear-gradient(135deg, #ffffff 0%, #000000 100%);
-    --brand-gradient-subtle: linear-gradient(
-      135deg,
-      #0a0a0a 0%,
-      #808080 20%,
-      #ffffff 100%
-    );
-  }
+        /* Brand Colors - Dark Mode */
+        --brand-primary: 0 0% 100%;
+        --brand-accent: 0 0% 50%;
+        --brand-light: 0 0% 10%;
+        --brand-gradient: linear-gradient(135deg, #ffffff 0%, #000000 100%);
+        --brand-gradient-subtle: linear-gradient(
+            135deg,
+            #0a0a0a 0%,
+            #808080 20%,
+            #ffffff 100%
+        );
+    }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground;
+    }
 }
 
 /* Monaco Editor custom styles */
 .monaco-editor {
-  border-radius: 0.5rem;
+    border-radius: 0.5rem;
 }
 
 /* Custom scrollbar for preview */
 .preview-scrollbar::-webkit-scrollbar {
-  width: 6px;
+    width: 6px;
 }
 
 .preview-scrollbar::-webkit-scrollbar-track {
-  background: hsl(var(--muted));
-  border-radius: 3px;
+    background: hsl(var(--muted));
+    border-radius: 3px;
 }
 
 .preview-scrollbar::-webkit-scrollbar-thumb {
-  background: hsl(var(--brand-primary));
-  border-radius: 3px;
+    background: hsl(var(--brand-primary));
+    border-radius: 3px;
 }
 
 .preview-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--brand-accent));
+    background: hsl(var(--brand-accent));
 }
 
 /* Modern Glass Effects */
 .glass-card {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .glass-card-dark {
-  background: rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Brand Gradient Utilities */
 .brand-gradient {
-  background: var(--brand-gradient);
+    background: var(--brand-gradient);
 }
 
 .brand-gradient-subtle {
-  background: var(--brand-gradient-subtle);
+    background: var(--brand-gradient-subtle);
 }
 
 .brand-text-gradient {
-  background: var(--brand-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+    background: var(--brand-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 /* Modern Shadows */
 .shadow-brand {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .shadow-brand-lg {
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
 }
 
 /* Subtle Animations */
 .transition-smooth {
-  transition: all 0.2s ease-in-out;
+    transition: all 0.2s ease-in-out;
 }
 
 .hover-lift:hover {
-  transform: translateY(-2px);
+    transform: translateY(-2px);
 }
 
 .hover-scale:hover {
-  transform: scale(1.02);
+    transform: scale(1.02);
 }
-

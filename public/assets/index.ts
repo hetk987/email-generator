@@ -4,6 +4,11 @@
  */
 export const templateAssetGlobals = [
   {
+    key: "footerBear",
+    url: "/assets/images/bear.png",
+    description: "Footer bear image URL; use with Img or pass to Footer footerBear.",
+  },
+  {
     key: "logoUrl",
     url: "/assets/images/logo.png",
     description:
@@ -24,3 +29,4 @@ function assetUrl(key: (typeof templateAssetGlobals)[number]["key"]): string {
 
 export const logoUrl = assetUrl("logoUrl");
 export const heroBgUrl = assetUrl("heroBgUrl");
+export const footerBear = assetUrl("footerBear");

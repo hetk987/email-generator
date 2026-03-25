@@ -30,7 +30,7 @@ export function ResizablePanels({
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    setIsDragging(true);
+    // setIsDragging(true);
   }, []);
 
   const handleMouseMove = useCallback(
